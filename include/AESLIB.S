@@ -191,15 +191,20 @@ form_alert	equ	52
 WF_NAME			equ	2
 WF_INFO			equ 3
 WF_WORKXYWH		equ 4
+WF_CURRXYWH		equ 5
+WF_FULLXYWH		equ 7
 WF_FIRSTXYWH 	equ 11
 
 ;event types
+MN_SELECTED equ 10
 WM_REDRAW	equ 20
 WM_CLOSED	equ 22
+WM_MOVED	equ	28
 
 aes_intin	equ	int_in
 aes_intout	equ	int_out
-
+aes_addrin	equ	addr_in
+aes_addrout	equ	addr_out
 
 *********** END OF AES *****************
 

@@ -567,7 +567,7 @@ rsrc_gaddr	macro	type,index
 	move.w	\2,int_in+2
 	move.l	#112<<16+2,control
 	move.l	#1<<16,control+4
-	move.w	#1,control+8		unique!
+	move.w	#1,control+8		;unique!
 	move.l	#aes_params,d1
 	move.w	#200,d0
 	trap	#2
@@ -1205,3 +1205,35 @@ vqt_cachesize	macro	which
 
 	
 *********** END OF VDI *****************
+
+AESClearIntIn	MACRO
+	move.w	#15, d0
+	move.l	#int_in, a0
+.loop_\@:
+	move.w	#0, (a0)+
+	dbra	d0, .loop_\@
+	ENDM
+
+AESClearAddrIn	MACRO
+	move.l	#2, d0
+	move.l	#addr_in, a0
+.loop_\@:
+	move.w	#0, (a0)+
+	dbra	d0, .loop_\@
+	ENDM
+
+VDIClearIntIn	MACRO
+	move.w	#127, d0
+	move.l	#intin, a0
+.loop_\@:
+	move.w	#0, (a0)+
+	dbra	d0, .loop_\@
+	ENDM
+
+VDIClearPtsIn	MACRO
+	move.w	#127, d0
+	move.l	#ptsin, a0
+.loop_\@:
+	move.w	#0, (a0)+
+	dbra	d0, .loop_\@
+	ENDM

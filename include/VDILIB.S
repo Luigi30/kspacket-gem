@@ -616,5 +616,4 @@ ptsout	ds.w	128		min 12
 vdi_intin	equ	intin
 vdi_intout	equ	intout
 
-
 *********** END OF VDI *****************

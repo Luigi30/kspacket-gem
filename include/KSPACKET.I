@@ -1,6 +1,5 @@
 ;KSPIO packet field offsets
 
-;KSP_id					equ	0
 KSP_AP					equ	0
 KSP_PE					equ	4
 KSP_SemiMajorAxis		equ	8
@@ -165,3 +164,175 @@ unit_MachNumber		dc.b	" Ma",0
 unit_IAS			dc.b	" M/s",0
 unit_CurrentStage	dc.b	"",0
 unit_TotalStage		dc.b	"",0
+
+;Values
+;Orbital parameters and stuff
+value_AP			dc.l	0
+value_PE			dc.l	0
+value_SemiMajorAxis	dc.l	0
+value_SemiMinorAxis	dc.l	0
+value_VVI			dc.l	0
+value_e				dc.l	0
+value_inc			dc.l	0
+value_G				dc.l	0
+value_TAp			dc.l	0
+value_TPe			dc.l	0
+value_TrueAnomaly	dc.l	0
+value_Density		dc.l	0
+value_period		dc.l	0
+value_RAlt			dc.l	0
+value_Alt			dc.l	0
+value_Vsurf			dc.l	0
+value_Lat			dc.l	0
+value_Lon			dc.l	0
+
+;Fuel
+value_LiquidFuelTot	dc.l	0
+value_LiquidFuel	dc.l	0
+value_OxidizerTot	dc.l	0
+value_Oxidizer		dc.l	0
+value_EChargeTot	dc.l	0
+value_ECharge		dc.l	0
+value_MonoPropTot	dc.l	0
+value_MonoProp		dc.l	0
+value_IntakeAirTot	dc.l	0
+value_IntakeAir		dc.l	0
+value_SolidFuelTot	dc.l	0
+value_SolidFuel		dc.l	0
+value_XenonGasTot	dc.l	0
+value_XenonGas		dc.l	0
+value_LiquidFuelTotS	dc.l	0
+value_LiquidFuelS	dc.l	0
+value_OxidizerTotS	dc.l	0
+value_OxidizerS		dc.l	0
+
+value_MissionTime	dc.l	0
+value_deltaTime		dc.l	0
+value_VOrbit		dc.l	0
+value_MNTime		dc.l	0
+value_MNDeltaV		dc.l	0
+value_Pitch			dc.l	0
+value_Roll			dc.l	0
+value_Heading		dc.l	0
+value_ActionGroups	dc.w	0
+value_SOINumber		dc.b	0
+value_MaxOverheat	dc.b	0
+value_MachNumber	dc.l	0
+value_IAS			dc.l	0
+value_CurrentStage	dc.b	0
+value_TotalStage	dc.b	0
+
+;Strings
+;Orbital parameters and stuff
+string_AP			ds.b	32
+string_PE			ds.b	32
+string_SemiMajorAxis	ds.b	32
+string_SemiMinorAxis	ds.b	32
+string_VVI			ds.b	32
+string_e				ds.b	32
+string_inc			ds.b	32
+string_G				ds.b	32
+string_TAp			ds.b	32
+string_TPe			ds.b	32
+string_TrueAnomaly	ds.b	32
+string_Density		ds.b	32
+string_period		ds.b	32
+string_RAlt			ds.b	32
+string_Alt			ds.b	32
+string_Vsurf			ds.b	32
+string_Lat			ds.b	32
+string_Lon			ds.b	32
+
+;Fuel
+string_LiquidFuelTot	ds.b	32
+string_LiquidFuel	ds.b	32
+string_OxidizerTot	ds.b	32
+string_Oxidizer		ds.b	32
+string_EChargeTot	ds.b	32
+string_ECharge		ds.b	32
+string_MonoPropTot	ds.b	32
+string_MonoProp		ds.b	32
+string_IntakeAirTot	ds.b	32
+string_IntakeAir		ds.b	32
+string_SolidFuelTot	ds.b	32
+string_SolidFuel		ds.b	32
+string_XenonGasTot	ds.b	32
+string_XenonGas		ds.b	32
+string_LiquidFuelTotS	ds.b	32
+string_LiquidFuelS	ds.b	32
+string_OxidizerTotS	ds.b	32
+string_OxidizerS		ds.b	32
+
+string_MissionTime	ds.b	32
+string_deltaTime		ds.b	32
+string_VOrbit		ds.b	32
+string_MNTime		ds.b	32
+string_MNDeltaV		ds.b	32
+string_Pitch			ds.b	32
+string_Roll			ds.b	32
+string_Heading		ds.b	32
+string_ActionGroups	ds.b	32
+string_SOINumber		ds.b	32
+string_MaxOverheat	dc.b	32
+string_MachNumber	ds.b	32
+string_IAS			ds.b	32
+string_CurrentStage	dc.b	32
+string_TotalStage	dc.b	32
+
+PopulateTestData:
+	move.l	#$4b3c614e, value_AP	
+	move.l	#$4b3c614e, value_PE			
+	move.l	#$4b3c614e, value_SemiMajorAxis	
+	move.l	#$4b3c614e, value_SemiMinorAxis	
+	move.l	#$4b3c614e, value_VVI			
+	move.l	#$4b3c614e, value_e				
+	move.l	#$4b3c614e, value_inc			
+	move.l	#$4b3c614e, value_G				
+	move.l	#$4b3c614e, value_TAp			
+	move.l	#$4b3c614e, value_TPe			
+	move.l	#$4b3c614e, value_TrueAnomaly	
+	move.l	#$4b3c614e, value_Density		
+	move.l	#$4b3c614e, value_period		
+	move.l	#$4b3c614e, value_RAlt			
+	move.l	#$4b3c614e, value_Alt			
+	move.l	#$4b3c614e, value_Vsurf			
+	move.l	#$4b3c614e, value_Lat			
+	move.l	#$4b3c614e, value_Lon			
+
+;Fuel
+	move.l	#$4b3c614e, value_LiquidFuelTot	
+	move.l	#$4b3c614e, value_LiquidFuel	
+	move.l	#$4b3c614e, value_OxidizerTot	
+	move.l	#$4b3c614e, value_Oxidizer		
+	move.l	#$4b3c614e, value_EChargeTot	
+	move.l	#$4b3c614e, value_ECharge		
+	move.l	#$4b3c614e, value_MonoPropTot	
+	move.l	#$4b3c614e, value_MonoProp		
+	move.l	#$4b3c614e, value_IntakeAirTot	
+	move.l	#$4b3c614e, value_IntakeAir		
+	move.l	#$4b3c614e, value_SolidFuelTot	
+	move.l	#$4b3c614e, value_SolidFuel		
+	move.l	#$4b3c614e, value_XenonGasTot	
+	move.l	#$4b3c614e, value_XenonGas		
+	move.l	#$4b3c614e, value_LiquidFuelTotS	
+	move.l	#$4b3c614e, value_LiquidFuelS	
+	move.l	#$4b3c614e, value_OxidizerTotS	
+	move.l	#$4b3c614e, value_OxidizerS		
+
+	move.l	#$4b3c614e, value_MissionTime	
+	move.l	#$4b3c614e, value_deltaTime		
+	move.l	#$4b3c614e, value_VOrbit		
+	move.l	#$4b3c614e, value_MNTime		
+	move.l	#$4b3c614e, value_MNDeltaV		
+	move.l	#$4b3c614e, value_Pitch			
+	move.l	#$4b3c614e, value_Roll			
+	move.l	#$4b3c614e, value_Heading		
+	move.w	#0, value_ActionGroups
+	move.b	#0, value_SOINumber	
+	move.b	#0, value_MaxOverheat
+	move.l	#$4b3c614e, value_MachNumber
+	move.l	#$4b3c614e, value_IAS
+	move.b	#0, value_CurrentStage
+	move.b	#0, value_TotalStage
+
+	RTS

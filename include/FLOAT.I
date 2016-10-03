@@ -2,6 +2,8 @@
 
 	SECTION CODE
 
+	XDEF FloatToString
+
 	even
 FloatToString:
 	PUSHREG d0-d7/a0-a7

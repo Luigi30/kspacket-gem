@@ -572,6 +572,9 @@ v_dostrcopy
 	XDEF	intin,intout,ptsin,ptsout
 	XDEF	current_handle,vdi_params
 
+	XDEF 	vdi_intin
+	XDEF 	vdi_intout
+
 	SECTION	CODE
 * call a VDI routine
 * in:	d0.w=VDI function number

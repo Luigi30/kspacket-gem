@@ -1,5 +1,146 @@
-;KSPIO packet field offsets
+	SECTION CODE
 
+	XDEF PopulateTestData, ProcessRawValues
+
+	XDEF string_G, string_AP, string_PE, string_SemiMajorAxis, string_SemiMinorAxis
+	XDEF string_e, string_VVI, string_inc, string_TAp, string_TPe, string_TrueAnomaly
+	XDEF string_period, string_SolidFuel, string_LiquidFuel, string_Oxidizer, string_ECharge
+	XDEF string_Pitch, string_Roll, string_Heading, string_Lat, string_Lon, string_RAlt, string_Density, string_Vsurf
+
+	XDEF lbl_G, lbl_AP, lbl_PE, lbl_SemiMajorAxis, lbl_SemiMinorAxis
+	XDEF lbl_e, lbl_VVI, lbl_inc, lbl_TAp, lbl_TPe, lbl_TrueAnomaly
+	XDEF lbl_period, lbl_SolidFuel, lbl_LiquidFuel, lbl_Oxidizer, lbl_ECharge
+	XDEF lbl_Pitch, lbl_Roll, lbl_Heading, lbl_Lat, lbl_Lon, lbl_RAlt, lbl_Density, lbl_Vsurf
+
+PopulateTestData:
+	move.l	#$4b3c614e, value_AP	
+	move.l	#$4b3c614e, value_PE			
+	move.l	#$4b3c614e, value_SemiMajorAxis	
+	move.l	#$4b3c614e, value_SemiMinorAxis	
+	move.l	#$4b3c614e, value_VVI			
+	move.l	#$4b3c614e, value_e				
+	move.l	#$4b3c614e, value_inc			
+	move.l	#$4b3c614e, value_G				
+	move.l	#$4b3c614e, value_TAp			
+	move.l	#$4b3c614e, value_TPe			
+	move.l	#$4b3c614e, value_TrueAnomaly	
+	move.l	#$4b3c614e, value_Density		
+	move.l	#$4b3c614e, value_period		
+	move.l	#$4b3c614e, value_RAlt			
+	move.l	#$4b3c614e, value_Alt			
+	move.l	#$4b3c614e, value_Vsurf			
+	move.l	#$00000000, value_Lat			
+	move.l	#$00000000, value_Lon			
+
+;Fuel
+	move.l	#$4b3c614e, value_LiquidFuelTot	
+	move.l	#$4b3c614e, value_LiquidFuel	
+	move.l	#$4b3c614e, value_OxidizerTot	
+	move.l	#$4b3c614e, value_Oxidizer		
+	move.l	#$4b3c614e, value_EChargeTot	
+	move.l	#$4b3c614e, value_ECharge		
+	move.l	#$4b3c614e, value_MonoPropTot	
+	move.l	#$4b3c614e, value_MonoProp		
+	move.l	#$4b3c614e, value_IntakeAirTot	
+	move.l	#$4b3c614e, value_IntakeAir		
+	move.l	#$4b3c614e, value_SolidFuelTot	
+	move.l	#$4b3c614e, value_SolidFuel		
+	move.l	#$4b3c614e, value_XenonGasTot	
+	move.l	#$4b3c614e, value_XenonGas		
+	move.l	#$4b3c614e, value_LiquidFuelTotS	
+	move.l	#$4b3c614e, value_LiquidFuelS	
+	move.l	#$4b3c614e, value_OxidizerTotS	
+	move.l	#$4b3c614e, value_OxidizerS		
+
+	move.l	#$4b3c614e, value_MissionTime	
+	move.l	#$4b3c614e, value_deltaTime		
+	move.l	#$4b3c614e, value_VOrbit		
+	move.l	#$4b3c614e, value_MNTime		
+	move.l	#$4b3c614e, value_MNDeltaV		
+	move.l	#$4b3c614e, value_Pitch			
+	move.l	#$4b3c614e, value_Roll			
+	move.l	#$4b3c614e, value_Heading		
+	move.w	#0, value_ActionGroups
+	move.b	#0, value_SOINumber	
+	move.b	#0, value_MaxOverheat
+	move.l	#$4b3c614e, value_MachNumber
+	move.l	#$4b3c614e, value_IAS
+	move.b	#0, value_CurrentStage
+	move.b	#0, value_TotalStage
+
+	RTS
+
+*************************************
+M_FloatToString		MACRO
+					move.l	value_\1, d0
+					lea		string_\1, a0
+					JSR		FloatToString
+					ENDM
+
+*************************************
+ProcessRawValues:
+	xref FloatToString
+
+	;This takes approximately 10 years on an 8MHz 68000
+	M_FloatToString AP
+	M_FloatToString PE			
+	M_FloatToString SemiMajorAxis	
+	M_FloatToString SemiMinorAxis	
+	M_FloatToString VVI			
+	M_FloatToString e				
+	M_FloatToString inc			
+	M_FloatToString G				
+	M_FloatToString TAp			
+	M_FloatToString TPe			
+	M_FloatToString TrueAnomaly	
+	M_FloatToString Density		
+	M_FloatToString period		
+	M_FloatToString RAlt			
+	M_FloatToString Alt			
+	M_FloatToString Vsurf			
+	M_FloatToString Lat			
+	M_FloatToString Lon			
+
+;Fuel
+	M_FloatToString LiquidFuelTot	
+	M_FloatToString LiquidFuel	
+	M_FloatToString OxidizerTot	
+	M_FloatToString Oxidizer		
+	M_FloatToString EChargeTot	
+	M_FloatToString ECharge		
+	M_FloatToString MonoPropTot	
+	M_FloatToString MonoProp		
+	M_FloatToString IntakeAirTot	
+	M_FloatToString IntakeAir		
+	M_FloatToString SolidFuelTot	
+	M_FloatToString SolidFuel		
+	M_FloatToString XenonGasTot	
+	M_FloatToString XenonGas		
+	M_FloatToString LiquidFuelTotS	
+	M_FloatToString LiquidFuelS	
+	M_FloatToString OxidizerTotS	
+	M_FloatToString OxidizerS		
+
+	M_FloatToString MissionTime	
+	M_FloatToString deltaTime		
+	M_FloatToString VOrbit		
+	M_FloatToString MNTime		
+	M_FloatToString MNDeltaV		
+	M_FloatToString Pitch			
+	M_FloatToString Roll			
+	M_FloatToString Heading		
+	;M_FloatToString ActionGroups ;word
+	;M_FloatToString SOINumber ;byte
+	;M_FloatToString MaxOverheat ;byte
+	M_FloatToString MachNumber
+	M_FloatToString IAS
+	;M_FloatToString CurrentStage ;byte
+	;M_FloatToString TotalStage ;byte
+
+	RTS
+
+;KSPIO packet field offsets
+	SECTION DATA
 KSP_AP					equ	0
 KSP_PE					equ	4
 KSP_SemiMajorAxis		equ	8
@@ -278,61 +419,3 @@ string_MachNumber	ds.b	32
 string_IAS			ds.b	32
 string_CurrentStage	dc.b	32
 string_TotalStage	dc.b	32
-
-PopulateTestData:
-	move.l	#$4b3c614e, value_AP	
-	move.l	#$4b3c614e, value_PE			
-	move.l	#$4b3c614e, value_SemiMajorAxis	
-	move.l	#$4b3c614e, value_SemiMinorAxis	
-	move.l	#$4b3c614e, value_VVI			
-	move.l	#$4b3c614e, value_e				
-	move.l	#$4b3c614e, value_inc			
-	move.l	#$4b3c614e, value_G				
-	move.l	#$4b3c614e, value_TAp			
-	move.l	#$4b3c614e, value_TPe			
-	move.l	#$4b3c614e, value_TrueAnomaly	
-	move.l	#$4b3c614e, value_Density		
-	move.l	#$4b3c614e, value_period		
-	move.l	#$4b3c614e, value_RAlt			
-	move.l	#$4b3c614e, value_Alt			
-	move.l	#$4b3c614e, value_Vsurf			
-	move.l	#$4b3c614e, value_Lat			
-	move.l	#$4b3c614e, value_Lon			
-
-;Fuel
-	move.l	#$4b3c614e, value_LiquidFuelTot	
-	move.l	#$4b3c614e, value_LiquidFuel	
-	move.l	#$4b3c614e, value_OxidizerTot	
-	move.l	#$4b3c614e, value_Oxidizer		
-	move.l	#$4b3c614e, value_EChargeTot	
-	move.l	#$4b3c614e, value_ECharge		
-	move.l	#$4b3c614e, value_MonoPropTot	
-	move.l	#$4b3c614e, value_MonoProp		
-	move.l	#$4b3c614e, value_IntakeAirTot	
-	move.l	#$4b3c614e, value_IntakeAir		
-	move.l	#$4b3c614e, value_SolidFuelTot	
-	move.l	#$4b3c614e, value_SolidFuel		
-	move.l	#$4b3c614e, value_XenonGasTot	
-	move.l	#$4b3c614e, value_XenonGas		
-	move.l	#$4b3c614e, value_LiquidFuelTotS	
-	move.l	#$4b3c614e, value_LiquidFuelS	
-	move.l	#$4b3c614e, value_OxidizerTotS	
-	move.l	#$4b3c614e, value_OxidizerS		
-
-	move.l	#$4b3c614e, value_MissionTime	
-	move.l	#$4b3c614e, value_deltaTime		
-	move.l	#$4b3c614e, value_VOrbit		
-	move.l	#$4b3c614e, value_MNTime		
-	move.l	#$4b3c614e, value_MNDeltaV		
-	move.l	#$4b3c614e, value_Pitch			
-	move.l	#$4b3c614e, value_Roll			
-	move.l	#$4b3c614e, value_Heading		
-	move.w	#0, value_ActionGroups
-	move.b	#0, value_SOINumber	
-	move.b	#0, value_MaxOverheat
-	move.l	#$4b3c614e, value_MachNumber
-	move.l	#$4b3c614e, value_IAS
-	move.b	#0, value_CurrentStage
-	move.b	#0, value_TotalStage
-
-	RTS

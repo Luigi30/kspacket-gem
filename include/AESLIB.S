@@ -15,6 +15,10 @@
 
 	XDEF	CALL_AES,control,global,int_in,int_out
 	XDEF	addr_in,addr_out,aes_params
+	XDEF 	aes_intin	equ	int_in
+	XDEF 	aes_intout	equ	int_out
+	XDEF 	aes_addrin	equ	addr_in
+	XDEF 	aes_addrout	equ	addr_out
 
 	SECTION	CODE
 * call an AES routine
@@ -183,9 +187,8 @@ addr_in		ds.l	3
 addr_out	ds.l	1
 
 ; function equates
-appl_init	equ	10
-appl_exit	equ	19
-form_alert	equ	52
+	XDEF	WF_NAME, WF_INFO, WF_WORKXYWH, WF_CURRXYWH, WF_FIRSTXYWH, WF_NEXTXYWH
+	XDEF	MN_SELECTED, WM_REDRAW, WM_CLOSED, WM_MOVED
 
 ;wind_set subfunctions
 WF_NAME			equ	2
@@ -194,6 +197,7 @@ WF_WORKXYWH		equ 4
 WF_CURRXYWH		equ 5
 WF_FULLXYWH		equ 7
 WF_FIRSTXYWH 	equ 11
+WF_NEXTXYWH		equ 12
 
 ;event types
 MN_SELECTED equ 10

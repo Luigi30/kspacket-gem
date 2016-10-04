@@ -46,7 +46,7 @@ CreateSurfaceMapWindow:
 	AESClearIntIn
 	AESClearAddrIn
 
-	wind_open	handle_surface_map_window, #60, #80, #400, #300
+	;wind_open	handle_surface_map_window, #60, #80, #400, #300
 
 LoadKerbinMap:
 	;load the kerbin map image
@@ -57,7 +57,7 @@ LoadKerbinMap:
 
 	;check that this file is a BMP
 	PEA		kerbinMapImage
-	PUSHL	#16383
+	PUSHL	#10000
 	PUSHW	kerbinMapHandle
 	GEMDOS	f_read, 12
 
@@ -405,10 +405,11 @@ FillTempCoordsWithSurfaceMapWindowCorners:
 	RTS
 
 	SECTION DATA
+
+	even
 bcdBuffer	dc.b 4
 
 handle_surface_map_window	dc.w	0
-
 ;top left coordinates
 surface_map_window_work_x	dc.w	0
 surface_map_window_work_y	dc.w	0
@@ -417,7 +418,7 @@ surface_map_window_work_h	dc.w	0
 
 ;Strings
 msgSurfaceMapTitle 		dc.b "Surface Map",0
-msgSurfaceMapInfobar 	dc.b " This is a surface map!",0
+msgSurfaceMapInfobar 	dc.b " Kerbin Surface Map",0
 msgLatitude				dc.b "Latitude :",0
 msgLongitude			dc.b "Longitude:",0
 	
@@ -441,11 +442,10 @@ lbl30S		dc.b	"30S",0
 lbl60S		dc.b	"60S",0
 
 	even
-kerbinMapFileName		dc.b "KERBIN.BMP",0
-	even
 kerbinMapHandle			dc.l 0
 kerbinMapImage			ds.b 16384 ;reserve 16kb for the bitmap
 kerbinMapVDIImage		ds.b 16384 ;reserve 16kb for the bitmap in VDI format
+kerbinMapFileName		dc.b "C:\\POLYGON\\KERBIN2.BMP",0
 
 	even
 ;Kerbin map MFDB structure.
@@ -460,7 +460,6 @@ kerbinMap_fd_r1		dc.w	0
 kerbinMap_fd_r2		dc.w	0
 kerbinMap_fd_r3		dc.w	0
 
-	even
 ;Kerbin map MFDB structure in VDI standard format.
 kerbinMapVDIMFDB:
 kerbinMap_vdi_fd_addr	dc.l	kerbinMapImage+62 ;offset 3E starts the image

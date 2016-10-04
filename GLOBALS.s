@@ -48,7 +48,22 @@
 	public PositionCursor
 	public NewLine
 
+	;event stuff
+	public Event_MouseX
+	public Event_MouseY
+	public Event_MouseButtons
+	public Event_MouseClickCount
+
+	public Event_KeyboardSpecial
+	public Event_KeyboardScancode
+
+	public mainWindowIsOpen
+	public surfaceMapWindowIsOpen
+
 application_id		dc.w	0 ;AES ID
+
+mainWindowIsOpen		dc.b 0
+surfaceMapWindowIsOpen	dc.b 0
 
 ;graf info
 gr_handle	dc.w	0
@@ -89,6 +104,15 @@ GFX_LOGICAL_BASE	dc.l	0
 ;Buffers
 StringBuilding	ds.b	128
 EventBuffer		ds.b	16
+
+Event_MouseX		dc.w	0
+Event_MouseY		dc.w	0
+Event_MouseButtons	dc.w	0
+Event_MouseClickCount	dc.w	0
+
+Event_KeyboardSpecial	dc.w	0
+Event_KeyboardScancode	dc.w	0
+
 
 ;String buffers
 PathName		ds.b	128

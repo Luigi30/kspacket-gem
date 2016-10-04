@@ -22,6 +22,9 @@
 	xdef	EventLoop
 	xdef 	GotToppedEvent
 	xdef	LoadFontInfo
+	xdef	EventMulti
+	xdef	OpenWindows
+	xdef	HandleKeypress
 
 	xdef 	aes_intin
 	xdef 	WF_NAME
@@ -115,11 +118,6 @@ VDIInit:
 	;Open a virtual workstation
 	v_opnvwk ;it's cleared automatically
 
-LoadFontInfo:
-	lea			intout+2, a0
-	vqt_name	#0
-	vqt_name	#1
-
 	graf_mouse #0 ;reset mouse to an arrow
 
 .mainWindow
@@ -128,10 +126,46 @@ LoadFontInfo:
 .surfaceMapWindow:
 	JSR		CreateSurfaceMapWindow
 
-EventLoop:
-	evnt_mesag	#EventBuffer
+OpenWindows:
+	wind_open	handle_main_window, #20, #40, #600, #300
 
+********************************************************
+EventLoop:
+	AESClearIntIn
+	AESClearAddrIn
+
+	;delete the last event
+	move.l	#0, EventBuffer
+	move.l	#0, EventBuffer+4
+	move.l	#0, EventBuffer+8
+	move.l	#0, EventBuffer+12
+
+	;Wait for keyboard events and AES messages.
+EventMulti:
+	move.w  #$0010, int_in+0 ;ev_mflags
+	move.w	#0, int_in+2 	;ev_mbclicks
+	move.w	#0, int_in+4 	;ev_mbmask
+	move.w	#0, int_in+6 	;ev_mbstate
+	move.w	#0, int_in+8 	;ev_mm1flags
+	move.w	#0, int_in+10 	;ev_mm1x
+	move.w	#0, int_in+12 	;ev_mm1y
+	move.w	#0, int_in+14 	;ev_mm1width
+	move.w	#0, int_in+16 	;ev_mm1height
+	move.w	#0, int_in+18 	;ev_mm2flags
+	move.w	#0, int_in+20 	;ev_mm2x
+	move.w	#0, int_in+22 	;ev_mm2y
+	move.w	#0, int_in+24 	;ev_mm2width
+	move.w	#0, int_in+26 	;ev_mm2height
+	move.w  #0, int_in+28 	;ev_mtlocount
+	move.w	#0, int_in+30 	;ev_mthicount
+
+	move.l	#EventBuffer, addr_in+0 ;ev_mmgpbuff
+
+	evnt_multi  #$0011
+
+	;We got an event! What kind is it?
 CheckEventType:
+	;window manager event?
 	cmp.w	#WM_REDRAW, EventBuffer
 	beq		GotRedrawEvent
 
@@ -144,11 +178,53 @@ CheckEventType:
 	cmp.w	#WM_TOPPED, EventBuffer
 	beq		GotToppedEvent
 
+	;menu event?
 	cmp.w	#MN_SELECTED, EventBuffer
 	beq		GotMenuSelectedEvent
 
+	;keyboard event?
+	move.w	int_out+10, d0
+	cmp.w	#0, d0
+	bne		HandleKeypress
+
+	;Uh-oh, we don't know how to handle this event.
 	jmp		UnhandledEventType
 
+	JMP		EventLoop
+
+*************************************
+HandleKeypress:
+	;open and close windows based on button presses.
+	;scancode is in the high nybble, ASCII is in the low nybble.
+	cmp.w	#$3B00, d0 ;F1
+	beq		.showMainWindow
+	
+	cmp.w	#$3C00, d0 ;F2
+	beq		.showSurfaceMapWindow
+
+	JMP		EventLoop
+
+.showMainWindow:
+	cmp.b		#1, mainWindowIsOpen
+	beq			.done ;don't re-open the same window
+	wind_close	handle_surface_map_window
+	wind_open	handle_main_window, #20, #40, #600, #300
+
+	move.b		#1, mainWindowIsOpen
+	move.b		#0, surfaceMapWindowIsOpen
+	JMP		.done
+
+.showSurfaceMapWindow:
+	cmp.b		#1, surfaceMapWindowIsOpen
+	beq			.done ;don't re-open the same window
+	wind_close	handle_main_window
+	wind_open	handle_surface_map_window, #60, #80, #400, #300
+
+	move.b		#1, surfaceMapWindowIsOpen
+	move.b		#0, mainWindowIsOpen
+	JMP		.done
+
+.done:
 	JMP		EventLoop
 
 *************************************
@@ -216,40 +292,37 @@ GotMovedEvent:
 
 *************************************
 GotMenuSelectedEvent:
-	move.w	handle_main_window, d0
-	cmp.w	EventBuffer+6, d0
-	beq		.isMainWindow
+	;quit button?
+	cmp.w	#16, EventBuffer+8
+	beq		GEMExit
+	jmp		.done
 
-	move.w	handle_surface_map_window, d0
-	cmp.w	EventBuffer+6, d0
-	beq		.isSurfaceMapWindow
-
-	;??? not a valid window handle
-	JMP		EventLoop	
-
-.isMainWindow
-	JSR		MenuSelectedMainWindow
-	JMP		EventLoop
-
-.isSurfaceMapWindow:
-	JSR		MenuSelectedSurfaceMapWindow
-	JMP		EventLoop
+.done:
+	RTS
 
 *************************************
 GEMExit:
-	AESClearIntIn
-	AESClearAddrIn
+	;AESClearIntIn
+	;AESClearAddrIn
 	;ShowAlert #msgImGay
 
+.mainwindow:
+	cmp.b	#0, mainWindowIsOpen
+	beq		.surfacemapwindow
+
 	wind_close	handle_main_window
-	wind_close	handle_surface_map_window
 	wind_delete	handle_main_window
+
+.surfacemapwindow:
+	cmp.b	#0, surfaceMapWindowIsOpen
+	beq		.windowsAreClosed
+	
+	wind_close	handle_surface_map_window
 	wind_delete	handle_surface_map_window
 
+.windowsAreClosed:
 	appl_exit
-
-End:
-	GEMDOS	0, 0 ;pterm0
+	GEMDOS	0, 2 ;pterm0
 
 ******************************
 ResourceMissing:
@@ -401,13 +474,23 @@ ShowFileSelector:
 
 	SECTION DATA
 ;Messages
+	even
 msgAnyKey		dc.b	"Press any key to return to GEM.",0
 msgAlertBox		dc.b	"[1][Everything is fucked!|Here's a GEM alert.][EXIT]"
 msgImGay		dc.b	"[2][I'm gay.][I, too, am gay.]"
 msgRsrcMissing	dc.b	"[1][Could not load POLYGON.RSC.][EXIT]"
 
-font6x6			dc.b	"6x6 system font"
-font8x8			dc.b	"8x8 system font"
+;A KSP packet.
+	even
+TestPacket		dc.b	$1B,$53,$68,$44,$63,$1A,$12,$C9,$B1,$17,$93,$48,$B4,$56,$EF,$46,$C4,$54,$EF,$42,$3C,$AC,$7E,$3F 	;24 bytes
+TestPacket2		dc.b	$E0,$14,$C7,$3D,$DE,$64,$E1,$40,$0C,$00,$00,$00,$21,$01,$00,$00,$51,$D5,$48,$40,$D3,$88,$8C,$3F,$29 ;25 bytes
+TestPacket3		dc.b	$02,$00,$00,$33,$9C,$F8,$42,$53,$DA,$3F,$43,$E2,$54,$EF,$42,$B2,$14,$C7,$BD,$9E,$B8,$8E,$43,$00,$00
+TestPacket4		dc.b	$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$48,$42,$00,$00,$48,$42,$00,$00,$20
+TestPacket5		dc.b	$41,$00,$00,$20,$41,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$0C,$43,$28,$2F,$D6,$42,$00,$00,$00,$00
+TestPacket6		dc.b	$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$02,$00,$00,$00,$00
+TestPacket7		dc.b	$00,$00,$00,$2E,$CF,$53,$43,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$B4,$42,$00,$00,$00,$00,$3F,$A0
+TestPacket8		dc.b	$D3,$3F,$00,$00,$82,$22,$5F,$1E,$A5,$3E,$F9,$22,$DE,$42,$00,$01
+
 *************************************
 
 	SECTION BSS

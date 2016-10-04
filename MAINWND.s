@@ -55,8 +55,6 @@ CreateMainWindow:
 	AESClearIntIn
 	AESClearAddrIn
 
-	wind_open	handle_main_window, #20, #40, #600, #300
-
 ******************************
 UpdateData:
 	move.l		#msgProcessing, aes_intin+4
@@ -372,7 +370,7 @@ msgProcessing	dc.b	" Processing packet data...",0
 
 msgAbout		dc.b	"[2][Kerbal Mission Control||By Luigi Thirty, 2016][Okay]"
 
-mainWindowResource 		dc.b	"POLYGON.RSC",0
+mainWindowResource 		dc.b	"C:\\POLYGON\\POLYGON.RSC",0
 mainWindowMenuAddress	dc.l	0
 
 currentRectangleX	dc.w	0

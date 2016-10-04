@@ -90,15 +90,15 @@ RedrawMainWindow:
 	move.w		aes_intout+8, currentRectangleH
 
 	JSR			RedrawMainWindowArea
-
-	;addq		#1, rectangleIndex
 	
 GetNextRectangle:
 	wind_get	handle_main_window, #WF_NEXTXYWH
 	move.w		rectangleIndex, d0
-	cmp.w		aes_intout, d0
+
+	;Is there actually another rectangle on the list?
+	cmp.w		#0, aes_intout+6 ;w
 	beq			.updateDone
-	cmp.w		#0, aes_intout
+	cmp.w		#0, aes_intout+8 ;h
 	beq			.updateDone
 
 	move.w		aes_intout+2, currentRectangleX

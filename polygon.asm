@@ -20,6 +20,8 @@
 	xdef	GEMExit
 	xdef	EventBuffer
 	xdef	EventLoop
+	xdef 	GotToppedEvent
+	xdef	LoadFontInfo
 
 	xdef 	aes_intin
 	xdef 	WF_NAME
@@ -113,6 +115,11 @@ VDIInit:
 	;Open a virtual workstation
 	v_opnvwk ;it's cleared automatically
 
+LoadFontInfo:
+	lea			intout+2, a0
+	vqt_name	#0
+	vqt_name	#1
+
 	graf_mouse #0 ;reset mouse to an arrow
 
 .mainWindow
@@ -133,6 +140,9 @@ CheckEventType:
 
 	cmp.w	#WM_CLOSED, EventBuffer
 	beq		GEMExit
+
+	cmp.w	#WM_TOPPED, EventBuffer
+	beq		GotToppedEvent
 
 	cmp.w	#MN_SELECTED, EventBuffer
 	beq		GotMenuSelectedEvent
@@ -160,6 +170,27 @@ GotRedrawEvent:
 
 .isSurfaceMapWindow:
 	JSR		RedrawSurfaceMapWindow
+	JMP		EventLoop
+
+*************************************
+GotToppedEvent:
+	move.w	handle_main_window, d0
+	cmp.w	EventBuffer+6, d0
+	beq		.isMainWindow
+
+	move.w	handle_surface_map_window, d0
+	cmp.w	EventBuffer+6, d0
+	beq		.isSurfaceMapWindow
+
+	;??? not a valid window handle
+	JMP		EventLoop	
+
+.isMainWindow
+	wind_set handle_main_window, #WF_TOP
+	JMP		EventLoop
+
+.isSurfaceMapWindow:
+	wind_set handle_surface_map_window, #WF_TOP
 	JMP		EventLoop
 
 *************************************
@@ -374,6 +405,9 @@ msgAnyKey		dc.b	"Press any key to return to GEM.",0
 msgAlertBox		dc.b	"[1][Everything is fucked!|Here's a GEM alert.][EXIT]"
 msgImGay		dc.b	"[2][I'm gay.][I, too, am gay.]"
 msgRsrcMissing	dc.b	"[1][Could not load POLYGON.RSC.][EXIT]"
+
+font6x6			dc.b	"6x6 system font"
+font8x8			dc.b	"8x8 system font"
 *************************************
 
 	SECTION BSS

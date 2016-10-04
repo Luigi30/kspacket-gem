@@ -11,6 +11,8 @@
 	xdef LatLongLabels
 	xdef LongitudeToString
 	xdef LatitudeToString
+	xdef LoadKerbinMap
+	xdef DrawKerbinMap
 
 	xref aes_intin
 	xref WF_NAME
@@ -18,6 +20,7 @@
 
 	include include/STMACROS.I
 	include	include/GEMMACRO.I
+	include include/GEMDOS.I
 
 Wind_Set_FourArgs	MACRO
 	move.w		\1, aes_intin+4
@@ -32,7 +35,7 @@ CreateSurfaceMapWindow:
 	VDIClearIntIn
 	VDIClearPtsIn
 
-	wind_create #$001B, #20, #40, #520, #300
+	wind_create #$001B, #20, #40, #400, #300
 	move.w		d0, handle_surface_map_window
 
 	move.l		#msgSurfaceMapTitle, aes_intin+4
@@ -43,7 +46,22 @@ CreateSurfaceMapWindow:
 	AESClearIntIn
 	AESClearAddrIn
 
-	wind_open	handle_surface_map_window, #60, #80, #520, #300
+	wind_open	handle_surface_map_window, #60, #80, #400, #300
+
+LoadKerbinMap:
+	;load the kerbin map image
+	PUSHW	#0 ;read-only
+	pea		kerbinMapFileName
+	GEMDOS	f_open, 8
+	move.w	d0, kerbinMapHandle
+
+	;check that this file is a BMP
+	PEA		kerbinMapImage
+	PUSHL	#16383
+	PUSHW	kerbinMapHandle
+	GEMDOS	f_read, 12
+
+	vr_trnfm #kerbinMapMFDB, #kerbinMapVDIMFDB
 
 	RTS
 
@@ -132,7 +150,91 @@ DrawMapRectangle:
 	cmp.b		#0, mapRectanglesLeft
 	bne			DrawMapRectangle
 
+DrawMapLabels:
+	VDIClearIntIn
+	VDIClearPtsIn
+	vst_point	#FONT_6X6
+
+	move.w		surface_map_window_work_x, d4
+	move.w		surface_map_window_work_y, d5
+	add.w		#375, d4
+	add.w		#12, d5
+	v_gtext		d4, d5, #lbl90deg
+
+	add.w		#30, d5
+	v_gtext		d4, d5, #lbl60N
+
+	add.w		#30, d5
+	v_gtext		d4, d5, #lbl30N
+
+	add.w		#30, d5
+	v_gtext		d4, d5, #lbl0deg
+
+	add.w		#30, d5
+	v_gtext		d4, d5, #lbl30S
+
+	add.w		#30, d5
+	v_gtext		d4, d5, #lbl60S
+
+	add.w		#30, d5
+	v_gtext		d4, d5, #lbl90deg
+
+	move.w		surface_map_window_work_x, d4
+	move.w		surface_map_window_work_y, d5
+	add.w		#2, d4
+	add.w		#197, d5
+	v_gtext		d4, d5, #lbl180deg
+
+	move.w		surface_map_window_work_x, d4
+	add.w		#30, d4
+	v_gtext		d4, d5, #lbl150W
+
+	move.w		surface_map_window_work_x, d4
+	add.w		#60, d4
+	v_gtext		d4, d5, #lbl120W
+
+	move.w		surface_map_window_work_x, d4
+	add.w		#95, d4
+	v_gtext		d4, d5, #lbl90W
+
+	move.w		surface_map_window_work_x, d4
+	add.w		#125, d4
+	v_gtext		d4, d5, #lbl60W
+
+	move.w		surface_map_window_work_x, d4
+	add.w		#155, d4
+	v_gtext		d4, d5, #lbl30W
+
+	move.w		surface_map_window_work_x, d4
+	add.w		#189, d4
+	v_gtext		d4, d5, #lbl0deg
+
+	move.w		surface_map_window_work_x, d4
+	add.w		#215, d4
+	v_gtext		d4, d5, #lbl30E
+
+	move.w		surface_map_window_work_x, d4
+	add.w		#245, d4
+	v_gtext		d4, d5, #lbl60E
+
+	move.w		surface_map_window_work_x, d4
+	add.w		#275, d4
+	v_gtext		d4, d5, #lbl90E
+
+	move.w		surface_map_window_work_x, d4
+	add.w		#300, d4
+	v_gtext		d4, d5, #lbl120E
+
+	move.w		surface_map_window_work_x, d4
+	add.w		#330, d4
+	v_gtext		d4, d5, #lbl150E
+
+	move.w		surface_map_window_work_x, d4
+	add.w		#362, d4
+	v_gtext		d4, d5, #lbl180deg
+
 .latitudeAndLongitude:
+	vst_point	#FONT_8X16
 	move.w		#-74, d0 ;74 degrees W
 	move.w		#6, d1 ;6 degrees S
 	JSR			PlotLatLongOnMapGrid
@@ -193,6 +295,9 @@ latitudeLabelX equ 10
 latitudeLabelY equ 220
 
 LatLongLabels:
+	VDIClearIntIn
+	VDIClearPtsIn
+
 	move.w	surface_map_window_work_x, d5
 	move.w	surface_map_window_work_y, d6
 	add.w	#latitudeLabelX, d5
@@ -203,7 +308,7 @@ LatLongLabels:
 	move.w	surface_map_window_work_y, d6
 	add.w	#latitudeLabelX, d5
 	add.w	#latitudeLabelY, d6
-	add.w	#100, d6
+	add.w	#100, d5
 	v_gtext d5, d6, #string_Lat
 
 	move.w	surface_map_window_work_x, d5
@@ -220,6 +325,27 @@ LatLongLabels:
 	add.w	gr_hhchar, d6
 	add.w	#100, d5
 	v_gtext d5, d6, #string_Lon
+
+DrawKerbinMap:
+
+	;source: copy a rectangle from (0,0) to (360,180)
+	move.w	#0, ptsin+0
+	move.w	#0,	ptsin+2
+	move.w	#360, ptsin+4
+	move.w	#180, ptsin+6
+
+	;destination: copy to a rectangle from (10,10) to (370,190) relative to the window position
+	move.w	surface_map_window_work_x, ptsin+8
+	move.w	surface_map_window_work_y, ptsin+10
+	move.w	surface_map_window_work_x, ptsin+12
+	move.w	surface_map_window_work_y, ptsin+14
+
+	add.w	#10, ptsin+8
+	add.w	#10, ptsin+10
+	add.w	#370, ptsin+12
+	add.w	#190, ptsin+14
+
+	vro_cpyfm	#7, #kerbinMapVDIMFDB, #screenMemoryMFDB
 
 	RTS
 
@@ -294,6 +420,60 @@ msgSurfaceMapTitle 		dc.b "Surface Map",0
 msgSurfaceMapInfobar 	dc.b " This is a surface map!",0
 msgLatitude				dc.b "Latitude :",0
 msgLongitude			dc.b "Longitude:",0
+	
+lbl180deg	dc.b	"180",0
+lbl150W		dc.b	"150W",0
+lbl120W		dc.b	"120W",0
+lbl90W		dc.b	"90W",0
+lbl60W		dc.b	"60W",0
+lbl30W		dc.b	"30W",0
+lbl0deg		dc.b	"0",0
+lbl30E		dc.b	"30E",0
+lbl60E		dc.b	"60E",0
+lbl90E		dc.b	"90E",0
+lbl120E		dc.b	"120E",0
+lbl150E		dc.b	"150E",0
+
+lbl90deg	dc.b	"90",0
+lbl60N		dc.b	"60N",0
+lbl30N		dc.b	"30N",0
+lbl30S		dc.b	"30S",0
+lbl60S		dc.b	"60S",0
+
+	even
+kerbinMapFileName		dc.b "KERBIN.BMP",0
+	even
+kerbinMapHandle			dc.l 0
+kerbinMapImage			ds.b 16384 ;reserve 16kb for the bitmap
+kerbinMapVDIImage		ds.b 16384 ;reserve 16kb for the bitmap in VDI format
+
+	even
+;Kerbin map MFDB structure.
+kerbinMapMFDB:
+kerbinMap_fd_addr	dc.l	kerbinMapImage+62 ;offset 3E starts the image
+kerbinMap_fd_w		dc.w	360 ;360 wide
+kerbinMap_fd_h		dc.w	180 ;180 tall
+kerbinMap_wdwidth	dc.w	24 ;one line is 24 words long
+kerbinMap_fd_stand	dc.w	0 ;device-specific format
+kerbinMap_fd_nplanes dc.w	1 ;1 bitplane = 1bpp
+kerbinMap_fd_r1		dc.w	0
+kerbinMap_fd_r2		dc.w	0
+kerbinMap_fd_r3		dc.w	0
+
+	even
+;Kerbin map MFDB structure in VDI standard format.
+kerbinMapVDIMFDB:
+kerbinMap_vdi_fd_addr	dc.l	kerbinMapImage+62 ;offset 3E starts the image
+kerbinMap_vdi_fd_w		dc.w	360 ;360 wide
+kerbinMap_vdi_fd_h		dc.w	180 ;180 tall
+kerbinMap_vdi_wdwidth	dc.w	24 ;one line is 24 words long
+kerbinMap_vdi_fd_stand	dc.w	0 ;device-specific format
+kerbinMap_vdi_fd_nplanes dc.w	1 ;1 bitplane = 1bpp
+kerbinMap_vdi_fd_r1		dc.w	0
+kerbinMap_vdi_fd_r2		dc.w	0
+kerbinMap_vdi_fd_r3		dc.w	0
+
+screenMemoryMFDB		dc.w	0 ;we just need a 0 there and VDI will know it's screen memory
 
 barTopLeftX		dc.w 0
 barTopLeftY		dc.w 0
@@ -335,4 +515,9 @@ mapGridRectangles	dc.w  10, 10, 370, 11 	;90 degrees N
 					dc.w  310, 10, 311, 190
 					dc.w  340, 10, 341, 190
 					dc.w  370, 10, 371, 190
+
+FONT_6X6	equ 8
+FONT_8X8 	equ 9
+FONT_8X16 	equ 10
+FONT_16X32 	equ 20
 

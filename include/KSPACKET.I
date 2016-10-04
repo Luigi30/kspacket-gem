@@ -29,8 +29,8 @@ PopulateTestData:
 	move.l	#$4b3c614e, value_RAlt			
 	move.l	#$4b3c614e, value_Alt			
 	move.l	#$4b3c614e, value_Vsurf			
-	move.l	#$00000000, value_Lat			
-	move.l	#$00000000, value_Lon			
+	move.l	#$40c00000, value_Lat			
+	move.l	#$c2940000, value_Lon			
 
 ;Fuel
 	move.l	#$4b3c614e, value_LiquidFuelTot	

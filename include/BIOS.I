@@ -12,3 +12,26 @@ bcostat		equ	8
 mediach		equ	9
 drvmap		equ	10
 kbshift		equ	11
+
+dev_prn		equ 0
+dev_aux		equ 1
+dev_con		equ 2
+dev_midi	equ 3
+dev_kbd		equ 4
+dev_screen	equ	5
+
+************************************
+B_Constat	MACRO
+	move.w	#\1, -(sp)
+	move.w	#bconstat, -(sp)
+	trap	#13
+	addq.l	#4, sp
+			ENDM
+************************************
+B_Conin		MACRO
+	move.w	#\1, -(sp)
+	move.w	#bconin, -(sp)
+	trap	#13
+	addq.l	#4, sp
+			ENDM
+************************************

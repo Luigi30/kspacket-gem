@@ -25,6 +25,8 @@
 	xdef	EventMulti
 	xdef	OpenWindows
 	xdef	HandleKeypress
+	xdef	RS232ReceiveException
+	xdef 	GotMenuSelectedEvent
 
 	xdef 	aes_intin
 	xdef 	WF_NAME
@@ -47,6 +49,7 @@
 ;included macros
 	include include/GEMDOS.I
 	include include/XBIOS.I
+	include include/BIOS.I
 	include include/STMACROS.I
 	include	include/GEMMACRO.I
 *************************************
@@ -75,11 +78,46 @@ M_SwapEndianness	MACRO
 					ENDM
 *************************************
 	
+HookRS232ReceiveVector:
+	move.l	$130, OldRS232Vector
+	move.l	#RS232ReceiveException, $130 ;ST-MFP-12
+	RTS
+
+UnhookRS232ReceiveVector:
+	move.l	OldRS232Vector, $130
+	RTS
+
+RS232ReceiveException:
+	;per http://info-coach.fr/atari/documents/_mydoc/Hitchhikers-Guide-V1.1.pdf
+	;Calling the BIOS from an Interrupt Handler - we need to set some stuff up
+savptr	equ	$04A2
+sav_amt equ 46
+	
+	;set up a trap environment
+	sub.l	#sav_amt, savptr
+
+	PUSHW	#1 ;aux:
+	PUSHW	#bconin
+	trap	#13
+	addq.l	#4,sp
+
+	move.w	d0, SerialBuffer
+
+	;restore old environment
+	add.l	#sav_amt, savptr
+	RTE
+
 	even
 _main:
 	JMP START
 
 START:
+	;hook the RS-232 receive vector
+	;PEA 	HookRS232ReceiveVector
+	;PUSHW 	#supexec
+	;trap 	#14 ;XBIOS call
+	;addq.l	#6,sp
+
 	jsr	PopulateTestData
 	jsr	GetPhysicalBase
 	jsr	GetLogicalBase
@@ -140,9 +178,9 @@ EventLoop:
 	move.l	#0, EventBuffer+8
 	move.l	#0, EventBuffer+12
 
-	;Wait for keyboard events and AES messages.
+	;Wait for keyboard events, AES messages, or the timer.
 EventMulti:
-	move.w  #$0010, int_in+0 ;ev_mflags
+	move.w  #$0031, int_in+0 ;ev_mflags
 	move.w	#0, int_in+2 	;ev_mbclicks
 	move.w	#0, int_in+4 	;ev_mbmask
 	move.w	#0, int_in+6 	;ev_mbstate
@@ -161,7 +199,11 @@ EventMulti:
 
 	move.l	#EventBuffer, addr_in+0 ;ev_mmgpbuff
 
-	evnt_multi  #$0011
+	evnt_multi  #$0031
+
+	;Stuff we want to do after every event.
+PostEventRoutine:
+	JSR		CheckSerialBuffer
 
 	;We got an event! What kind is it?
 CheckEventType:
@@ -190,6 +232,10 @@ CheckEventType:
 	;Uh-oh, we don't know how to handle this event.
 	jmp		UnhandledEventType
 
+	JMP		EventLoop
+
+*************************************
+NoEventOccurred:
 	JMP		EventLoop
 
 *************************************
@@ -295,16 +341,26 @@ GotMenuSelectedEvent:
 	;quit button?
 	cmp.w	#16, EventBuffer+8
 	beq		GEMExit
-	jmp		.done
+
+	cmp.w	#7, EventBuffer+8
+	beq		ShowAboutBox
+
+	;fell through all the checks
 
 .done:
-	RTS
+	JMP		EventLoop
 
 *************************************
 GEMExit:
 	;AESClearIntIn
 	;AESClearAddrIn
 	;ShowAlert #msgImGay
+
+	;reset the original RS-232 vector
+	PEA 	UnhookRS232ReceiveVector
+	PUSHW 	#supexec
+	trap 	#14 ;XBIOS call
+	addq.l	#6,sp
 
 .mainwindow:
 	cmp.b	#0, mainWindowIsOpen
@@ -336,6 +392,11 @@ UnhandledEventType:
 	;allow for a breakpoint
 	move.w	EventBuffer, d0
 	JMP		EventLoop
+
+******************************
+ShowAboutBox:
+	form_alert  #1, #msgAboutBox
+	JMP			EventLoop
 
 ******************************
 vdi:
@@ -467,29 +528,30 @@ ShowFileSelector:
 	RTS
 
 *************************************
+CheckSerialBuffer: ;is there data waiting?
+	B_Constat	dev_aux
+	cmp.w		#0, d0
+	beq			.done ;no
+
+.done:
+	RTS
+
+*************************************
 ;Included functions
 	include include/LINEHORZ.I
 	include include/VIDEO.I
 *************************************
 
 	SECTION DATA
+OldRS232Vector	dc.l	0
+
 ;Messages
 	even
 msgAnyKey		dc.b	"Press any key to return to GEM.",0
 msgAlertBox		dc.b	"[1][Everything is fucked!|Here's a GEM alert.][EXIT]"
+msgAboutBox		dc.b	"[0][   Kerbal Mission Control  |   by Luigi Thirty, 2016| |aut viam inveniam aut faciam  ][Close]"
 msgImGay		dc.b	"[2][I'm gay.][I, too, am gay.]"
 msgRsrcMissing	dc.b	"[1][Could not load POLYGON.RSC.][EXIT]"
-
-;A KSP packet.
-	even
-TestPacket		dc.b	$1B,$53,$68,$44,$63,$1A,$12,$C9,$B1,$17,$93,$48,$B4,$56,$EF,$46,$C4,$54,$EF,$42,$3C,$AC,$7E,$3F 	;24 bytes
-TestPacket2		dc.b	$E0,$14,$C7,$3D,$DE,$64,$E1,$40,$0C,$00,$00,$00,$21,$01,$00,$00,$51,$D5,$48,$40,$D3,$88,$8C,$3F,$29 ;25 bytes
-TestPacket3		dc.b	$02,$00,$00,$33,$9C,$F8,$42,$53,$DA,$3F,$43,$E2,$54,$EF,$42,$B2,$14,$C7,$BD,$9E,$B8,$8E,$43,$00,$00
-TestPacket4		dc.b	$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$48,$42,$00,$00,$48,$42,$00,$00,$20
-TestPacket5		dc.b	$41,$00,$00,$20,$41,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$0C,$43,$28,$2F,$D6,$42,$00,$00,$00,$00
-TestPacket6		dc.b	$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$02,$00,$00,$00,$00
-TestPacket7		dc.b	$00,$00,$00,$2E,$CF,$53,$43,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$B4,$42,$00,$00,$00,$00,$3F,$A0
-TestPacket8		dc.b	$D3,$3F,$00,$00,$82,$22,$5F,$1E,$A5,$3E,$F9,$22,$DE,$42,$00,$01
 
 *************************************
 

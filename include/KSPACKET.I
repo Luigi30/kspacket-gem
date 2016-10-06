@@ -12,7 +12,91 @@
 	XDEF lbl_period, lbl_SolidFuel, lbl_LiquidFuel, lbl_Oxidizer, lbl_ECharge
 	XDEF lbl_Pitch, lbl_Roll, lbl_Heading, lbl_Lat, lbl_Lon, lbl_RAlt, lbl_Density, lbl_Vsurf
 
+	XDEF unit_G, unit_AP, unit_PE, unit_SemiMajorAxis, unit_SemiMinorAxis
+	XDEF unit_e, unit_VVI, unit_inc, unit_TAp, unit_TPe, unit_TrueAnomaly
+	XDEF unit_period, unit_SolidFuel, unit_LiquidFuel, unit_Oxidizer, unit_ECharge
+	XDEF unit_Pitch, unit_Roll, unit_Heading, unit_Lat, unit_Lon, unit_RAlt, unit_Density, unit_Vsurf
+
+M_SwapEndianness	MACRO
+				    ror.w   #8, \1
+				    swap    \1
+				    ror.w   #8, \1
+					ENDM
+
+M_LoadFloatFromPacketStructure	MACRO
+	
+	move.l	KSP_\1(a0), d0
+	M_SwapEndianness d0
+	move.l	d0, value_\1
+	ENDM
+
+M_LoadWordFromPacketStructure	MACRO
+	move.w	KSP_\1(a0), value_\1
+	ENDM
+
+M_LoadByteFromPacketStructure	MACRO
+	move.b	KSP_\1(a0), value_\1
+	ENDM
+
 PopulateTestData:
+	lea		TestPacket, a0
+
+	M_LoadFloatFromPacketStructure AP
+	M_LoadFloatFromPacketStructure PE
+	M_LoadFloatFromPacketStructure SemiMajorAxis
+	M_LoadFloatFromPacketStructure SemiMinorAxis
+	M_LoadFloatFromPacketStructure VVI
+	M_LoadFloatFromPacketStructure e
+	M_LoadFloatFromPacketStructure inc
+	M_LoadFloatFromPacketStructure G
+	M_LoadFloatFromPacketStructure TAp
+	M_LoadFloatFromPacketStructure TPe
+	M_LoadFloatFromPacketStructure TrueAnomaly
+	M_LoadFloatFromPacketStructure Density
+	M_LoadFloatFromPacketStructure period
+	M_LoadFloatFromPacketStructure RAlt
+	M_LoadFloatFromPacketStructure Alt
+	M_LoadFloatFromPacketStructure Vsurf
+	M_LoadFloatFromPacketStructure Lat
+	M_LoadFloatFromPacketStructure Lon
+
+	M_LoadFloatFromPacketStructure LiquidFuelTot
+	M_LoadFloatFromPacketStructure LiquidFuel
+	M_LoadFloatFromPacketStructure OxidizerTot
+	M_LoadFloatFromPacketStructure Oxidizer
+	M_LoadFloatFromPacketStructure EChargeTot
+	M_LoadFloatFromPacketStructure ECharge
+	M_LoadFloatFromPacketStructure MonoPropTot
+	M_LoadFloatFromPacketStructure MonoProp
+	M_LoadFloatFromPacketStructure IntakeAirTot
+	M_LoadFloatFromPacketStructure IntakeAir
+	M_LoadFloatFromPacketStructure SolidFuelTot
+	M_LoadFloatFromPacketStructure SolidFuel
+	M_LoadFloatFromPacketStructure XenonGasTot
+	M_LoadFloatFromPacketStructure XenonGas
+	M_LoadFloatFromPacketStructure LiquidFuelTotS
+	M_LoadFloatFromPacketStructure LiquidFuelS
+	M_LoadFloatFromPacketStructure OxidizerTotS
+	M_LoadFloatFromPacketStructure OxidizerS
+
+	M_LoadFloatFromPacketStructure MissionTime
+	M_LoadFloatFromPacketStructure deltaTime
+	M_LoadFloatFromPacketStructure VOrbit
+	M_LoadFloatFromPacketStructure MNTime
+	M_LoadFloatFromPacketStructure MNDeltaV
+	M_LoadFloatFromPacketStructure Pitch
+	M_LoadFloatFromPacketStructure Roll
+	M_LoadFloatFromPacketStructure Heading
+	M_LoadWordFromPacketStructure ActionGroups
+	M_LoadWordFromPacketStructure SOINumber
+	M_LoadByteFromPacketStructure MaxOverheat ;byte
+	M_LoadFloatFromPacketStructure MachNumber
+	M_LoadWordFromPacketStructure IAS
+	M_LoadByteFromPacketStructure CurrentStage ;byte
+	M_LoadByteFromPacketStructure TotalStage ;byte
+
+	RTS
+
 	move.l	#$4b3c614e, value_AP	
 	move.l	#$4b3c614e, value_PE			
 	move.l	#$4b3c614e, value_SemiMajorAxis	
@@ -251,24 +335,24 @@ lbl_TotalStage		dc.b	"TotlStgs: ",0
 
 ;Units of measure
 ;Orbital parameters and stuff
-unit_AP				dc.b	" M",0
-unit_PE				dc.b	" M",0
-unit_SemiMajorAxis	dc.b	" M",0
-unit_SemiMinorAxis	dc.b	" M",0
-unit_VVI			dc.b	" M/s",0
+unit_AP				dc.b	"M",0
+unit_PE				dc.b	"M",0
+unit_SemiMajorAxis	dc.b	"M",0
+unit_SemiMinorAxis	dc.b	"M",0
+unit_VVI			dc.b	"M/s",0
 unit_e				dc.b	"",0
-unit_inc			dc.b	" Rad",0
-unit_G				dc.b	" g",0
-unit_TAp			dc.b	" sec",0
-unit_TPe			dc.b	" sec",0
-unit_TrueAnomaly	dc.b	" Rad",0
-unit_Density		dc.b	" kg/m",$FE,0 ;kg/m³
-unit_period			dc.b	" sec",0
-unit_RAlt			dc.b	" M",0
-unit_Alt			dc.b	" M",0
-unit_Vsurf			dc.b	" M/s",0
-unit_Lat			dc.b	" Deg",0
-unit_Lon			dc.b	" Deg",0
+unit_inc			dc.b	"Rad",0
+unit_G				dc.b	"g",0
+unit_TAp			dc.b	"sec",0
+unit_TPe			dc.b	"sec",0
+unit_TrueAnomaly	dc.b	"Rad",0
+unit_Density		dc.b	"kg/m",$FE,0 ;kg/m³
+unit_period			dc.b	"sec",0
+unit_RAlt			dc.b	"M",0
+unit_Alt			dc.b	"M",0
+unit_Vsurf			dc.b	"M/s",0
+unit_Lat			dc.b	"Deg",0
+unit_Lon			dc.b	"Deg",0
 
 ;Fuel
 unit_LiquidFuelTot	dc.b	"",0
@@ -291,23 +375,25 @@ unit_OxidizerTotS	dc.b	"",0
 unit_OxidizerS		dc.b	"",0
 
 unit_MissionTime	dc.b	"",0
-unit_deltaTime		dc.b	" sec",0
-unit_VOrbit			dc.b	" M/s",0
-unit_MNTime			dc.b	" sec",0
-unit_MNDeltaV		dc.b	" M/s",0
-unit_Pitch			dc.b	" Deg",0
-unit_Roll			dc.b	" Deg",0
-unit_Heading		dc.b	" Deg",0
+unit_deltaTime		dc.b	"sec",0
+unit_VOrbit			dc.b	"M/s",0
+unit_MNTime			dc.b	"sec",0
+unit_MNDeltaV		dc.b	"M/s",0
+unit_Pitch			dc.b	"Deg",0
+unit_Roll			dc.b	"Deg",0
+unit_Heading		dc.b	"Deg",0
 unit_ActionGroups	dc.b	"",0
 unit_SOINumber		dc.b	"",0
 unit_MaxOverheat	dc.b	"",0
-unit_MachNumber		dc.b	" Ma",0
-unit_IAS			dc.b	" M/s",0
+unit_MachNumber		dc.b	"Ma",0
+unit_IAS			dc.b	"M/s",0
 unit_CurrentStage	dc.b	"",0
 unit_TotalStage		dc.b	"",0
 
 ;Values
+	even
 ;Orbital parameters and stuff
+KSPValues:
 value_AP			dc.l	0
 value_PE			dc.l	0
 value_SemiMajorAxis	dc.l	0
@@ -419,3 +505,14 @@ string_MachNumber	ds.b	32
 string_IAS			ds.b	32
 string_CurrentStage	dc.b	32
 string_TotalStage	dc.b	32
+
+;A KSP packet.
+	even
+TestPacket		dc.b	$1B,$53,$68,$44,$63,$1A,$12,$C9,$B1,$17,$93,$48,$B4,$56,$EF,$46,$C4,$54,$EF,$42,$3C,$AC,$7E,$3F 	;24 bytes
+TestPacket2		dc.b	$E0,$14,$C7,$3D,$DE,$64,$E1,$40,$0C,$00,$00,$00,$21,$01,$00,$00,$51,$D5,$48,$40,$D3,$88,$8C,$3F,$29 ;25 bytes
+TestPacket3		dc.b	$02,$00,$00,$33,$9C,$F8,$42,$53,$DA,$3F,$43,$E2,$54,$EF,$42,$B2,$14,$C7,$BD,$9E,$B8,$8E,$43,$00,$00
+TestPacket4		dc.b	$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$48,$42,$00,$00,$48,$42,$00,$00,$20
+TestPacket5		dc.b	$41,$00,$00,$20,$41,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$0C,$43,$28,$2F,$D6,$42,$00,$00,$00,$00
+TestPacket6		dc.b	$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$02,$00,$00,$00,$00
+TestPacket7		dc.b	$00,$00,$00,$2E,$CF,$53,$43,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$B4,$42,$00,$00,$00,$00,$3F,$A0
+TestPacket8		dc.b	$D3,$3F,$00,$00,$82,$22,$5F,$1E,$A5,$3E,$F9,$22,$DE,$42,$00,$01

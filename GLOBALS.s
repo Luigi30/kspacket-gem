@@ -36,6 +36,7 @@
 	public GFX_LOGICAL_BASE	
 
 	;Buffers
+	public SerialBuffer
 	public StringBuilding
 	public EventBuffer
 
@@ -90,11 +91,11 @@ main_window_work_h	dc.w	0
 
 ;layout
 COLUMN_1	equ	0
-COLUMN_2	equ	200
+COLUMN_2	equ	220
 COLUMN_3	equ 400
 
 VALUE_COLUMN_1	equ	80
-VALUE_COLUMN_2	equ	280
+VALUE_COLUMN_2	equ	310
 VALUE_COLUMN_3	equ 480
 
 ;Pointers
@@ -102,6 +103,7 @@ GFX_BASE			dc.l	0
 GFX_LOGICAL_BASE	dc.l	0
 
 ;Buffers
+SerialBuffer	ds.b	256
 StringBuilding	ds.b	128
 EventBuffer		ds.b	16
 
@@ -113,10 +115,12 @@ Event_MouseClickCount	dc.w	0
 Event_KeyboardSpecial	dc.w	0
 Event_KeyboardScancode	dc.w	0
 
-
 ;String buffers
 PathName		ds.b	128
 FileName		ds.b	128
+
+;KSP packets
+PacketDataBuffer	ds.b	256
 
 ;Escape codes
 ClearHome		dc.b	$1B,"E",0

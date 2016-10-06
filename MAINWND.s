@@ -118,6 +118,8 @@ GetNextRectangle:
 *************************************
 RedrawMainWindowArea:
 	;todo: make this actually efficient
+
+	vst_point	#FONT_8X16
 	
 DoVsClip:
 	;wind_get returns X,Y,W,H. vs_clip wants X,Y and X,Y of the opposite corner
@@ -257,6 +259,14 @@ FillTempCoordsWithRectangleListCorners:
 
 	RTS
 
+DrawNextValue	MACRO
+	add.w		d4, d6
+	v_gtext		d5, d6, #string_\1
+	add.w		#88, d5
+	v_gtext		d5, d6, #unit_\1
+	sub.w		#88, d5
+	ENDM
+
 *************************************
 DrawValues:
 	;d0 = character height
@@ -271,85 +281,40 @@ DrawValues:
 
 	add.w		#VALUE_COLUMN_1, d5
 
-	add.w		d4, d6
-	v_gtext		d5, d6, #string_G
-
-	add.w		d4, d6
-	v_gtext		d5, d6, #string_AP
-
-	add.w		d4, d6
-	v_gtext		d5, d6, #string_PE
-
-	add.w		d4, d6
-	v_gtext		d5, d6, #string_SemiMajorAxis
-
-	add.w		d4, d6
-	v_gtext		d5, d6, #string_SemiMinorAxis
-
-	add.w		d4, d6
-	v_gtext		d5, d6, #string_e
-
-	add.w		d4, d6
-	v_gtext		d5, d6, #string_VVI
-
-	add.w		d4, d6
-	v_gtext		d5, d6, #string_inc
-
-	add.w		d4, d6
-	v_gtext		d5, d6, #string_TAp
-
-	add.w		d4, d6
-	v_gtext		d5, d6, #string_TPe
-
-	add.w		d4, d6
-	v_gtext		d5, d6, #string_TrueAnomaly
-
-	add.w		d4, d6
-	v_gtext		d5, d6, #string_period
+	DrawNextValue	G
+	DrawNextValue	AP
+	DrawNextValue	PE
+	DrawNextValue	SemiMajorAxis
+	DrawNextValue	SemiMinorAxis
+	DrawNextValue	e
+	DrawNextValue	VVI
+	DrawNextValue	inc
+	DrawNextValue	TAp
+	DrawNextValue	TPe
+	DrawNextValue	TrueAnomaly
+	DrawNextValue	period
 
 	;Fuel quantities
 	move.w		#VALUE_COLUMN_2, d5
 	move.w		d7, d6
 
-	add.w		d4, d6
-	v_gtext		d5, d6, #string_SolidFuel
-
-	add.w		d4, d6	
-	v_gtext		d5, d6, #string_LiquidFuel
-
-	add.w		d4, d6	
-	v_gtext		d5, d6, #string_Oxidizer
-
-	add.w		d4, d6	
-	v_gtext		d5, d6, #string_ECharge
+	DrawNextValue	SolidFuel
+	DrawNextValue	LiquidFuel
+	DrawNextValue	Oxidizer
+	DrawNextValue	ECharge
 
 	;Surface info
 	move.w		#VALUE_COLUMN_3, d5
 	move.w		d7, d6
 
-	add.w		d4, d6
-	v_gtext		d5, d6, #string_Pitch
-
-	add.w		d4, d6
-	v_gtext		d5, d6, #string_Roll
-
-	add.w		d4, d6
-	v_gtext		d5, d6, #string_Heading
-
-	add.w		d4, d6
-	v_gtext		d5, d6, #string_Lat
-
-	add.w		d4, d6
-	v_gtext		d5, d6, #string_Lon
-
-	add.w		d4, d6
-	v_gtext		d5, d6, #string_RAlt
-
-	add.w		d4, d6
-	v_gtext		d5, d6, #string_Density
-
-	add.w		d4, d6
-	v_gtext		d5, d6, #string_Vsurf
+	DrawNextValue	Pitch
+	DrawNextValue	Roll
+	DrawNextValue	Heading
+	DrawNextValue	Lat
+	DrawNextValue	Lon
+	DrawNextValue	RAlt
+	DrawNextValue	Density
+	DrawNextValue	Vsurf
 
 	RTS
 
@@ -377,3 +342,8 @@ currentRectangleX	dc.w	0
 currentRectangleY	dc.w	0
 currentRectangleW	dc.w	0
 currentRectangleH	dc.w	0
+
+FONT_6X6	equ 8
+FONT_8X8 	equ 9
+FONT_8X16 	equ 10
+FONT_16X32 	equ 20

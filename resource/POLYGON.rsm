@@ -2,10 +2,9 @@ ResourceMaster v3.65
 #C 2@0@0@0@
 #N 99@32@AZAaza___  _@AZAaza090___  _@@_@
 #R 0@0@2@1@2@1@
-#M 20010100@0@7728@506@
+#M 20010100@0@7728@511@
 #T 0@1@DESK@@17@@
 #O 7@28@PROGRAMBUTTON@@
-#T 1@2@AboutBox@@3@@
-#O 1@21@aboutKerbalMissionControl@@
+#T 1@2@AboutBox@@5@@
 #O 2@26@aboutBtnClose@@
-#c 9541@
+#c 12935@

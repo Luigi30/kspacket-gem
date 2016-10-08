@@ -121,6 +121,7 @@ GetNextRectangle:
 	graf_mouse	#257 ;mouse on
 	
 	RTS
+
 *************************************
 RedrawMainWindowArea:
 	;todo: make this actually efficient
@@ -223,6 +224,7 @@ HandleButtonMissionControl:
 	AESClearAddrIn
 	form_alert	#1, #msgAbout
 	JMP		EventLoop
+
 *************************************
 MoveMainWindow:
 	;Move the window.
@@ -230,8 +232,8 @@ MoveMainWindow:
 	wind_set	handle_main_window, #WF_CURRXYWH
 
 	RTS
-*************************************
 
+*************************************
 MenuSelectedMainWindow:
 	RTS
 
@@ -324,6 +326,83 @@ DrawValues:
 
 	RTS
 
+*************************************
+DrawLabels:
+	;d0 = character height
+	;d1 = window top left X
+	;d2 = window top left Y
+
+	;move these so they don't get eaten by v_gtext
+	move.w		d0, d4 ;height
+	move.w		d1, d5 ;top left X
+	move.w		d2, d6 ;top left Y
+
+	move.w		d6, d7
+
+	add.w		#COLUMN_1, d5
+
+	add.w		d4, d6
+	v_gtext		d5, d6, #lbl_G
+	add.w		d4, d6
+	v_gtext		d5, d6, #lbl_AP
+	add.w		d4, d6
+	v_gtext		d5, d6, #lbl_PE
+	add.w		d4, d6
+	v_gtext		d5, d6, #lbl_SemiMajorAxis
+	add.w		d4, d6
+	v_gtext		d5, d6, #lbl_SemiMinorAxis
+	add.w		d4, d6
+	v_gtext		d5, d6, #lbl_e
+	add.w		d4, d6
+	v_gtext		d5, d6, #lbl_VVI
+	add.w		d4, d6
+	v_gtext		d5, d6, #lbl_inc
+	add.w		d4, d6
+	v_gtext		d5, d6, #lbl_TAp
+	add.w		d4, d6
+	v_gtext		d5, d6, #lbl_TPe
+	add.w		d4, d6
+	v_gtext		d5, d6, #lbl_TrueAnomaly
+	add.w		d4, d6
+	v_gtext		d5, d6, #lbl_period
+
+	;Fuel quantities
+	move.w		#COLUMN_2, d5
+	move.w		d7, d6
+
+	add.w		d4, d6
+	v_gtext		d5, d6, #lbl_SolidFuel
+	add.w		d4, d6	
+	v_gtext		d5, d6, #lbl_LiquidFuel
+	add.w		d4, d6	
+	v_gtext		d5, d6, #lbl_Oxidizer
+	add.w		d4, d6	
+	v_gtext		d5, d6, #lbl_ECharge
+	add.w		d4, d6	
+
+	;Surface info
+	move.w		#COLUMN_3, d5
+	move.w		d7, d6
+
+	add.w		d4, d6
+	v_gtext		d5, d6, #lbl_Pitch
+	add.w		d4, d6
+	v_gtext		d5, d6, #lbl_Roll
+	add.w		d4, d6
+	v_gtext		d5, d6, #lbl_Heading
+	add.w		d4, d6
+	v_gtext		d5, d6, #lbl_Lat
+	add.w		d4, d6
+	v_gtext		d5, d6, #lbl_Lon
+	add.w		d4, d6
+	v_gtext		d5, d6, #lbl_RAlt
+	add.w		d4, d6
+	v_gtext		d5, d6, #lbl_Density
+	add.w		d4, d6
+	v_gtext		d5, d6, #lbl_Vsurf
+
+	RTS
+
 ***************************
 	include	include/FLOAT.I
 
@@ -341,10 +420,11 @@ msgProcessing	dc.b	" Processing packet data...",0
 
 msgAbout		dc.b	"[2][Kerbal Mission Control||By Luigi Thirty, 2016][Okay]"
 
-;mainWindowResource 		dc.b	"C:\\POLYGON\\POLYGON.RSC",0
 mainWindowResource 		dc.b	"RESOURCE\\POLYGON.RSC",0
 mainWindowMenuAddress	dc.l	0
 
+
+	SECTION BSS
 currentRectangleX	dc.w	0
 currentRectangleY	dc.w	0
 currentRectangleW	dc.w	0

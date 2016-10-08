@@ -28,6 +28,10 @@
 	xdef	RS232ReceiveException
 	xdef 	GotMenuSelectedEvent
 	xdef	FileIsMissing
+	xdef	ShowAboutBox
+
+	xdef	formAlertIcon1
+	xdef	formAlertButtonExit
 
 	xdef	StringBuilding
 
@@ -79,35 +83,6 @@ M_SwapEndianness	MACRO
 					ENDM
 *************************************
 	
-HookRS232ReceiveVector:
-	move.l	$130, OldRS232Vector
-	move.l	#RS232ReceiveException, $130 ;ST-MFP-12
-	RTS
-
-UnhookRS232ReceiveVector:
-	move.l	OldRS232Vector, $130
-	RTS
-
-RS232ReceiveException:
-	;per http://info-coach.fr/atari/documents/_mydoc/Hitchhikers-Guide-V1.1.pdf
-	;Calling the BIOS from an Interrupt Handler - we need to set some stuff up
-savptr	equ	$04A2
-sav_amt equ 46
-	
-	;set up a trap environment
-	sub.l	#sav_amt, savptr
-
-	PUSHW	#1 ;aux:
-	PUSHW	#bconin
-	trap	#13
-	addq.l	#4,sp
-
-	move.w	d0, SerialBuffer
-
-	;restore old environment
-	add.l	#sav_amt, savptr
-	RTE
-
 	even
 _main:
 	JMP START
@@ -157,8 +132,6 @@ VDIInit:
 	;Open a virtual workstation
 	v_opnvwk ;it's cleared automatically
 
-	graf_mouse #0 ;reset mouse to an arrow
-
 .mainWindow
 	JSR		CreateMainWindow
 
@@ -167,6 +140,8 @@ VDIInit:
 
 OpenWindows:
 	wind_open	handle_main_window, #20, #40, #600, #300
+
+	graf_mouse #0 ;reset mouse to an arrow
 
 ********************************************************
 EventLoop:
@@ -357,12 +332,6 @@ GEMExit:
 	;AESClearAddrIn
 	;ShowAlert #msgImGay
 
-	;reset the original RS-232 vector
-	PEA 	UnhookRS232ReceiveVector
-	PUSHW 	#supexec
-	trap 	#14 ;XBIOS call
-	addq.l	#6,sp
-
 .mainwindow:
 	cmp.b	#0, mainWindowIsOpen
 	beq		.surfacemapwindow
@@ -378,41 +347,11 @@ GEMExit:
 	wind_delete	handle_surface_map_window
 
 .windowsAreClosed:
+	rsrc_free ;unload the resource
 	appl_exit ;deregister application with VDI
 	JSR	_exit ;vbcc exit code
 
-******************************
-FileIsMissing:
-	move.l	a0, a6
-	move.b	#0, StringBuilding
-	lea		StringBuilding, a0
-	lea		formAlertIcon1, a1
-	JSR		strcat
 
-	subq	#1, a0 ;overwrite the null
-	move.b	#'[', (a0)+
-	move.b	#0, (a0)+
-
-	lea		StringBuilding, a0
-	lea		errorFileMissing, a1
-	JSR		strcat
-
-	lea		StringBuilding, a0
-	move.l	a6, a1
-	JSR		strcat
-
-	subq	#1, a0 ;overwrite the null
-	move.b	#']', (a0)+
-	move.b	#0, (a0)+
-
-	lea		StringBuilding, a0
-	lea		formAlertButtonExit, a1
-	JSR		strcat
-
-	form_alert #1, #StringBuilding
-
-	JMP		GEMExit
-	
 ******************************
 UnhandledEventType:
 	;allow for a breakpoint
@@ -421,7 +360,33 @@ UnhandledEventType:
 
 ******************************
 ShowAboutBox:
-	form_alert  #1, #msgAboutBox
+	;form_alert  #1, #msgAboutBox
+	rsrc_gaddr	#0, #1 ;Form AboutBox
+	move.l		aes_addrout, aboutBoxObjectAddress
+
+	form_center	aboutBoxObjectAddress
+	move.w		intout+2, centeredDialogX
+	move.w		intout+4, centeredDialogY
+	move.w		intout+6, centeredDialogW
+	move.w		intout+8, centeredDialogH
+
+	form_dial	#0, #0, #0, #10, #10, #0, #0, #640, #400
+	form_dial	#1, #0, #0, #10, #10, #0, #0, #416, #144
+
+	;draw the dialog
+	objc_draw	aboutBoxObjectAddress, #0, #1, #0, #0, #640, #400
+
+	;the dialog takes over user interaction
+	form_do		aboutBoxObjectAddress, #0
+
+	;the dialog is exited
+	form_dial	#2, #0, #0, #10, #10, #0, #0, #416, #144
+	form_dial	#3, #0, #0, #10, #10, #0, #0, #640, #400
+
+	;form_dial	#0, #0, #0, #10, #10, centeredDialogX, centeredDialogY, centeredDialogW, centeredDialogH
+	;form_dial	#1, #0, #0, #10, #10, centeredDialogX, centeredDialogY, centeredDialogW, centeredDialogH
+	;objc_draw	aboutBoxObjectAddress, #0, #1, centeredDialogX, centeredDialogY, centeredDialogW, centeredDialogH
+
 	JMP			EventLoop
 
 ******************************
@@ -432,83 +397,6 @@ vdi:
     trap    #2                      ; Call VDI.
     movem.l (sp)+,a0-a7/d0-d7       ; Restore registers.
     rts
-
-*************************************
-DrawLabels:
-	;d0 = character height
-	;d1 = window top left X
-	;d2 = window top left Y
-
-	;move these so they don't get eaten by v_gtext
-	move.w		d0, d4 ;height
-	move.w		d1, d5 ;top left X
-	move.w		d2, d6 ;top left Y
-
-	move.w		d6, d7
-
-	add.w		#COLUMN_1, d5
-
-	add.w		d4, d6
-	v_gtext		d5, d6, #lbl_G
-	add.w		d4, d6
-	v_gtext		d5, d6, #lbl_AP
-	add.w		d4, d6
-	v_gtext		d5, d6, #lbl_PE
-	add.w		d4, d6
-	v_gtext		d5, d6, #lbl_SemiMajorAxis
-	add.w		d4, d6
-	v_gtext		d5, d6, #lbl_SemiMinorAxis
-	add.w		d4, d6
-	v_gtext		d5, d6, #lbl_e
-	add.w		d4, d6
-	v_gtext		d5, d6, #lbl_VVI
-	add.w		d4, d6
-	v_gtext		d5, d6, #lbl_inc
-	add.w		d4, d6
-	v_gtext		d5, d6, #lbl_TAp
-	add.w		d4, d6
-	v_gtext		d5, d6, #lbl_TPe
-	add.w		d4, d6
-	v_gtext		d5, d6, #lbl_TrueAnomaly
-	add.w		d4, d6
-	v_gtext		d5, d6, #lbl_period
-
-	;Fuel quantities
-	move.w		#COLUMN_2, d5
-	move.w		d7, d6
-
-	add.w		d4, d6
-	v_gtext		d5, d6, #lbl_SolidFuel
-	add.w		d4, d6	
-	v_gtext		d5, d6, #lbl_LiquidFuel
-	add.w		d4, d6	
-	v_gtext		d5, d6, #lbl_Oxidizer
-	add.w		d4, d6	
-	v_gtext		d5, d6, #lbl_ECharge
-	add.w		d4, d6	
-
-	;Surface info
-	move.w		#COLUMN_3, d5
-	move.w		d7, d6
-
-	add.w		d4, d6
-	v_gtext		d5, d6, #lbl_Pitch
-	add.w		d4, d6
-	v_gtext		d5, d6, #lbl_Roll
-	add.w		d4, d6
-	v_gtext		d5, d6, #lbl_Heading
-	add.w		d4, d6
-	v_gtext		d5, d6, #lbl_Lat
-	add.w		d4, d6
-	v_gtext		d5, d6, #lbl_Lon
-	add.w		d4, d6
-	v_gtext		d5, d6, #lbl_RAlt
-	add.w		d4, d6
-	v_gtext		d5, d6, #lbl_Density
-	add.w		d4, d6
-	v_gtext		d5, d6, #lbl_Vsurf
-
-	RTS
 
 *************************************
 
@@ -554,32 +442,19 @@ ShowFileSelector:
 	RTS
 
 *************************************
-CheckSerialBuffer: ;is there data waiting?
-	B_Constat	dev_aux
-	cmp.w		#0, d0
-	beq			.done ;no
-
-.done:
-	RTS
-
-*************************************
 ;Included functions
 	include include/LINEHORZ.I
 	include include/VIDEO.I
 *************************************
 
 	SECTION DATA
-OldRS232Vector	dc.l	0
 
 ;Messages
 	even
 msgAnyKey		dc.b	"Press any key to return to GEM.",0
 msgAlertBox		dc.b	"[1][Everything is fucked!|Here's a GEM alert.][EXIT]"
 msgAboutBox		dc.b	"[0][   Kerbal Mission Control  |   by Luigi Thirty, 2016| |aut viam inveniam aut faciam  ][Close]"
-msgImGay		dc.b	"[2][I'm gay.][I, too, am gay.]"
 msgRsrcMissing	dc.b	"[1][Could not load POLYGON.RSC][EXIT]"
-
-errorFileMissing	dc.b	"Could not load ",0
 
 	even
 formAlertFileMissing	dc.b	"[0][Could not load %s.|If this file exists, your media may be corrupt.][EXIT]",0
@@ -597,3 +472,10 @@ formAlertIcon1	dc.b	"[1]",0
 	SECTION BSS
 				ds.l     256 ; 1KB stack
 stack    		ds.l     1
+
+aboutBoxObjectAddress	dc.l 0
+
+centeredDialogX	dc.w 0
+centeredDialogY	dc.w 0
+centeredDialogW	dc.w 0
+centeredDialogH	dc.w 0

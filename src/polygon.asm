@@ -27,12 +27,13 @@
 	xdef	HandleKeypress
 	xdef	RS232ReceiveException
 	xdef 	GotMenuSelectedEvent
+	xdef	FileIsMissing
+
+	xdef	StringBuilding
 
 	xdef 	aes_intin
 	xdef 	WF_NAME
 	xdef	WF_INFO
-
-	xdef 	ResourceMissing
 
 	xref 	application_id
 	xref 	gr_hhbox
@@ -377,16 +378,41 @@ GEMExit:
 	wind_delete	handle_surface_map_window
 
 .windowsAreClosed:
-	appl_exit
-	GEMDOS	0, 2 ;pterm0
+	appl_exit ;deregister application with VDI
+	JSR	_exit ;vbcc exit code
 
 ******************************
-ResourceMissing:
-	AESClearIntIn
-	AESClearAddrIn
-	form_alert  #1, #msgRsrcMissing
-	JMP			GEMExit
+FileIsMissing:
+	move.l	a0, a6
+	move.b	#0, StringBuilding
+	lea		StringBuilding, a0
+	lea		formAlertIcon1, a1
+	JSR		strcat
 
+	subq	#1, a0 ;overwrite the null
+	move.b	#'[', (a0)+
+	move.b	#0, (a0)+
+
+	lea		StringBuilding, a0
+	lea		errorFileMissing, a1
+	JSR		strcat
+
+	lea		StringBuilding, a0
+	move.l	a6, a1
+	JSR		strcat
+
+	subq	#1, a0 ;overwrite the null
+	move.b	#']', (a0)+
+	move.b	#0, (a0)+
+
+	lea		StringBuilding, a0
+	lea		formAlertButtonExit, a1
+	JSR		strcat
+
+	form_alert #1, #StringBuilding
+
+	JMP		GEMExit
+	
 ******************************
 UnhandledEventType:
 	;allow for a breakpoint
@@ -551,7 +577,20 @@ msgAnyKey		dc.b	"Press any key to return to GEM.",0
 msgAlertBox		dc.b	"[1][Everything is fucked!|Here's a GEM alert.][EXIT]"
 msgAboutBox		dc.b	"[0][   Kerbal Mission Control  |   by Luigi Thirty, 2016| |aut viam inveniam aut faciam  ][Close]"
 msgImGay		dc.b	"[2][I'm gay.][I, too, am gay.]"
-msgRsrcMissing	dc.b	"[1][Could not load POLYGON.RSC.][EXIT]"
+msgRsrcMissing	dc.b	"[1][Could not load POLYGON.RSC][EXIT]"
+
+errorFileMissing	dc.b	"Could not load ",0
+
+	even
+formAlertFileMissing	dc.b	"[0][Could not load %s.|If this file exists, your media may be corrupt.][EXIT]",0
+	even
+formAlertLeftBracket	dc.b	"[",0
+	even
+formAlertRightBracket	dc.b	"]",0
+	even
+formAlertButtonExit		dc.b	"[EXIT]",0
+	even
+formAlertIcon1	dc.b	"[1]",0
 
 *************************************
 

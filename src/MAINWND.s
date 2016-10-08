@@ -14,7 +14,7 @@
 	xdef ProcessRawValues
 
 	xref EventLoop
-	xref ResourceMissing
+	xref FileIsMissing
 
 	xdef GetNextRectangle
 
@@ -30,7 +30,7 @@ CreateMainWindow:
 
 	rsrc_load	#mainWindowResource
 	cmp.w		#0, aes_intout
-	;beq			ResourceMissing ;couldn't load the resource file
+	beq			.resourceMissing ;couldn't load the resource file
 
 	AESClearIntIn
 	AESClearAddrIn
@@ -39,7 +39,7 @@ CreateMainWindow:
 
 	rsrc_gaddr	#0, #0 ;main
 	cmp.w		#0, aes_intout
-	;beq			ResourceMissing ;couldn't load the resource file
+	beq			.resourceMissing ;couldn't load the resource file
 
 	move.l		aes_addrout, mainWindowMenuAddress
 	menu_bar	mainWindowMenuAddress, #1
@@ -54,6 +54,12 @@ CreateMainWindow:
 
 	AESClearIntIn
 	AESClearAddrIn
+
+	JMP	UpdateData
+
+.resourceMissing:
+	LEA		mainWindowResource, a0
+	JMP		FileIsMissing
 
 ******************************
 UpdateData:
@@ -324,7 +330,7 @@ DrawValues:
 	SECTION DATA
 handle_main_window	dc.w	0
 
-rectangleIndex	dc.w	0
+rectangleIndex		dc.w	0
 rectanglesInList	dc.w	0
 
 updateDataFlag	dc.b	0
@@ -335,7 +341,8 @@ msgProcessing	dc.b	" Processing packet data...",0
 
 msgAbout		dc.b	"[2][Kerbal Mission Control||By Luigi Thirty, 2016][Okay]"
 
-mainWindowResource 		dc.b	"C:\\POLYGON\\POLYGON.RSC",0
+;mainWindowResource 		dc.b	"C:\\POLYGON\\POLYGON.RSC",0
+mainWindowResource 		dc.b	"RESOURCE\\POLYGON.RSC",0
 mainWindowMenuAddress	dc.l	0
 
 currentRectangleX	dc.w	0

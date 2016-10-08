@@ -1,3 +1,5 @@
+	SECTION CODE
+
 	SECTION DATA
 
 	public application_id
@@ -126,4 +128,3 @@ PacketDataBuffer	ds.b	256
 ClearHome		dc.b	$1B,"E",0
 PositionCursor	dc.b	$1B,"Y",0
 NewLine			dc.b	$0D,$0A,0
-

@@ -147,6 +147,10 @@ LoadKerbinMap:
 	GEMDOS	f_open, 8
 	move.w	d0, kerbinMapHandle
 
+	;do we have a valid handle?
+	cmp.w	#0, kerbinMapHandle
+	bmi		KerbinMapMissing
+
 	;check that this file is a BMP
 	PEA		kerbinMapImage
 	PUSHL	#10000
@@ -155,7 +159,18 @@ LoadKerbinMap:
 
 	vr_trnfm #kerbinMapMFDB, #kerbinMapVDIMFDB
 
+	;close the file now that we don't need it anymore
+	PUSHW	kerbinMapHandle
+	GEMDOS	f_close, 4
+	move.w	#0, kerbinMapHandle ;invalidate the handle
+
 	RTS
+
+******************************
+KerbinMapMissing:
+	lea		kerbinMapFileName, a0
+	JSR		FileIsMissing
+	;does not return
 
 ******************************
 RedrawSurfaceMapWindow:
@@ -519,6 +534,13 @@ FillTempCoordsWithSurfaceMapWindowCorners:
 
 	RTS
 
+************************************
+GetCelestialBodyLabel:
+	;SOI Number (decimal format: sun-planet-moon e.g. 130 = kerbin, 131 = mun)
+	cmp.b	#130, value_SOINumber
+
+	RTS
+
 	SECTION DATA
 
 	even
@@ -536,6 +558,13 @@ msgSurfaceMapTitle 		dc.b "Surface Map",0
 msgSurfaceMapInfobar 	dc.b " Kerbin Surface Map",0
 msgLatitude				dc.b "Latitude :",0
 msgLongitude			dc.b "Longitude:",0
+
+msgPlanetKerbin	dc.b	"Kerbin",0
+msgMoonMun		dc.b	"Mun",0
+
+;Celestial body types
+msgBodyMoon		dc.b	"Moon",0
+msgBodyPlanet	dc.b	"Planet",0
 	
 lbl180deg	dc.b	"180",0
 lbl150W		dc.b	"150W",0
@@ -560,9 +589,8 @@ bcdNegateFlag dc.b 0
 
 	even
 kerbinMapHandle			dc.l 0
-kerbinMapImage			ds.b 16384 ;reserve 16kb for the bitmap
-kerbinMapVDIImage		ds.b 16384 ;reserve 16kb for the bitmap in VDI format
-kerbinMapFileName		dc.b "C:\\POLYGON\\KERBIN2.BMP",0
+;kerbinMapFileName		dc.b "C:\\POLYGON\\KERBIN2.BMP",0
+kerbinMapFileName		dc.b "GFX\\KERBIN2.BMP",0
 
 	even
 ;Kerbin map MFDB structure.
@@ -608,9 +636,6 @@ negateBcdFlag		dc.b 0
 currentLatitude		dc.w 0
 currentLongitude	dc.w 0
 
-stringLatitude		ds.b 10
-stringLongitude		ds.b 10
-
 mapGridRectangles	dc.w  10, 10, 370, 11 	;90 degrees N
 					dc.w  10, 40, 370, 41 	;60 degrees N
 					dc.w  10, 70, 370, 71 	;30 degrees N
@@ -642,3 +667,9 @@ hundredsOffset  equ 4
 tensOffset      equ 5
 onesOffset      equ 6
 
+	section BSS
+kerbinMapImage		ds.b 16384 ;reserve 16kb for the bitmap
+kerbinMapVDIImage	ds.b 16384 ;reserve 16kb for the bitmap in VDI format
+
+stringLatitude		ds.b 10
+stringLongitude		ds.b 10

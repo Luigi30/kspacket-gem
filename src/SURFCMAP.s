@@ -1,10 +1,26 @@
+FONT_6X6		equ 8
+FONT_8X8 		equ 9
+FONT_8X16 		equ 10
+FONT_16X32 		equ 20
+
+hundredsOffset  equ 4
+tensOffset      equ 5
+onesOffset      equ 6
+
+mapGridTopLeftX equ 10
+mapGridTopLeftY equ 10
+mapGridWidth	equ 360
+mapGridHeight	equ 180
+
+latitudeLabelX 	equ 10
+latitudeLabelY 	equ 220
+
 	SECTION CODE
 	xdef handle_surface_map_window
 
 	xdef CreateSurfaceMapWindow
 	xdef RedrawSurfaceMapWindow
 	xdef MoveSurfaceMapWindow
-	xdef MenuSelectedSurfaceMapWindow
 	xdef DrawMapGrid
 	xdef DrawRectangle
 	xdef PlotLatLongOnMapGrid
@@ -138,9 +154,10 @@ CreateSurfaceMapWindow:
 	AESClearIntIn
 	AESClearAddrIn
 
-	;wind_open	handle_surface_map_window, #60, #80, #400, #300
-
 LoadKerbinMap:
+	;(sp) = kerbinMapHandle
+	;LINK	a6, #-2
+
 	;load the kerbin map image
 	PUSHW	#0 ;read-only
 	pea		kerbinMapFileName
@@ -164,6 +181,7 @@ LoadKerbinMap:
 	GEMDOS	f_close, 4
 	move.w	#0, kerbinMapHandle ;invalidate the handle
 
+	;UNLK	a6
 	RTS
 
 ******************************
@@ -174,6 +192,16 @@ KerbinMapMissing:
 
 ******************************
 RedrawSurfaceMapWindow:
+	link		a6, #-16
+
+	;sp		= temp_coord1_x
+	;sp+2	= temp_coord1_y
+	;sp+4	= temp_coord2_x
+	;sp+6	= temp_coord2_y
+	;sp+8	= temp_coord3_x
+	;sp+10	= temp_coord3_y
+	;sp+12	= temp_coord4_x
+	;sp+14	= temp_coord4_y
 
 	graf_mouse	#256 ;mouse off
 	wind_update	#1 ;begin update
@@ -187,42 +215,64 @@ RedrawSurfaceMapWindow:
 
 .doVsClip:
 	;wind_get returns X,Y,W,H. vs_clip wants X,Y and X,Y of the opposite corner
-	move.w		surface_map_window_work_x, temp_coord1_x
-	move.w		surface_map_window_work_y, temp_coord1_y
+	move.w		surface_map_window_work_x, 0(sp)
+	move.w		surface_map_window_work_y, 2(sp)
 
-	move.w		surface_map_window_work_x, temp_coord2_x
-	move.w		surface_map_window_work_y, temp_coord2_y
+	move.w		surface_map_window_work_x, 4(sp)
+	move.w		surface_map_window_work_y, 6(sp)
 
 	move.w		surface_map_window_work_w, d0
-	add.w		d0, temp_coord2_x
+	add.w		d0, 4(sp)
 	move.w		surface_map_window_work_h, d0
-	add.w		d0, temp_coord2_y
+	add.w		d0, 6(sp)
 
 	;clip to the window's work area
-	vs_clip		#1, temp_coord1_x, temp_coord1_y, temp_coord2_x, temp_coord2_y
+	vs_clip		#1, 0(sp), 2(sp), 4(sp), 6(sp)
 	vsf_color	#0 ;white
 
-	JSR			FillTempCoordsWithSurfaceMapWindowCorners
+	move.w		surface_map_window_work_x, 0(sp)
+	move.w		surface_map_window_work_y, 2(sp)
+	
+	move.w		surface_map_window_work_x, 4(sp)
+	move.w		surface_map_window_work_y, 6(sp)
+	move.w		surface_map_window_work_w, d0
+	add.w		d0, 4(sp)
+
+	move.w		surface_map_window_work_x, 8(sp)
+	move.w		surface_map_window_work_y, 10(sp)
+	move.w		surface_map_window_work_w, d0
+	add.w		d0, 8(sp)
+	move.w		surface_map_window_work_h, d0
+	add.w		d0, 10(sp)
+
+	move.w		surface_map_window_work_x, 12(sp)
+	move.w		surface_map_window_work_y, 14(sp)
+	move.w		surface_map_window_work_h, d0
+	add.w		d0, 14(sp)
 
 .copyWindowCoords:
-	move.w		temp_coord1_x, ptsin
-	move.w		temp_coord1_y, ptsin+2
-	move.w		temp_coord2_x, ptsin+4
-	move.w		temp_coord2_y, ptsin+6
-	move.w		temp_coord3_x, ptsin+8
-	move.w		temp_coord3_y, ptsin+10
-	move.w		temp_coord4_x, ptsin+12
-	move.w		temp_coord4_y, ptsin+14
+	move.w		0(sp), ptsin
+	move.w		2(sp), ptsin+2
+	move.w		4(sp), ptsin+4
+	move.w		6(sp), ptsin+6
+	move.w		8(sp), ptsin+8
+	move.w		10(sp),ptsin+10
+	move.w		12(sp),ptsin+12
+	move.w		14(sp),ptsin+14
 
 	v_fillarea	#4
 
+	PUSHREG		a6
 	move.w		gr_hhchar, d0
 	move.w		surface_map_window_work_x, d1
 	move.w		surface_map_window_work_y, d2
 	JSR			DrawMapGrid
+	POPREG		a6
 
 	wind_update	#0 ;end update
 	graf_mouse	#257 ;mouse on
+
+	UNLK		a6
 	RTS
 
 DrawMapGrid:
@@ -230,19 +280,21 @@ DrawMapGrid:
 	;d1 = window top left X
 	;d2 = window top left Y
 
+	LINK		a6, #-2 ;word-size local variable
+
 	vsf_color	#1 ;black
 	vswr_mode	#1
 	vsf_interior #2
 	vsf_style	#2
 
-	lea			mapGridRectangles, a6
-	move.b		#20, mapRectanglesLeft
+	lea			mapGridRectangles, a0
+	move.b		#20, (sp)
 
 DrawMapRectangle:
-	move.w		(a6)+, d0 ;top left X
-	move.w		(a6)+, d1 ;top left Y
-	move.w		(a6)+, d2 ;bottom right X
-	move.w		(a6)+, d3 ;bottom right Y
+	move.w		(a0)+, d0 ;top left X
+	move.w		(a0)+, d1 ;top left Y
+	move.w		(a0)+, d2 ;bottom right X
+	move.w		(a0)+, d3 ;bottom right Y
 	
 	move.w		surface_map_window_work_x, d4
 	add.w		d4, d0
@@ -251,11 +303,15 @@ DrawMapRectangle:
 	add.w		d5, d1
 	add.w		d5, d3
 
+	PUSHREG		a0
 	v_bar		d0, d1, d2, d3
+	POPREG		a0
 
-	subq.b		#1, mapRectanglesLeft
-	cmp.b		#0, mapRectanglesLeft
+	subq.b		#1, (sp)
+	cmp.b		#0, (sp)
 	bne			DrawMapRectangle
+
+	UNLK		a6
 
 DrawMapLabels:
 	VDIClearIntIn
@@ -417,9 +473,6 @@ LatitudeToString:
 	cmpi.w		#0, d4
 	bne			.loop
 
-latitudeLabelX equ 10
-latitudeLabelY equ 220
-
 LatLongLabels:
 	VDIClearIntIn
 	VDIClearPtsIn
@@ -504,33 +557,6 @@ MoveSurfaceMapWindow:
 	;Move the window.
 	Wind_Set_FourArgs	EventBuffer+8, EventBuffer+10, EventBuffer+12, EventBuffer+14
 	wind_set	handle_surface_map_window, #WF_CURRXYWH
-
-	RTS
-
-MenuSelectedSurfaceMapWindow:
-	RTS
-
-**
-FillTempCoordsWithSurfaceMapWindowCorners:
-	move.w		surface_map_window_work_x, temp_coord1_x
-	move.w		surface_map_window_work_y, temp_coord1_y
-	
-	move.w		surface_map_window_work_x, temp_coord2_x
-	move.w		surface_map_window_work_y,	temp_coord2_y
-	move.w		surface_map_window_work_w, d0
-	add.w		d0, temp_coord2_x
-
-	move.w		surface_map_window_work_x, temp_coord3_x
-	move.w		surface_map_window_work_y,	temp_coord3_y
-	move.w		surface_map_window_work_w, d0
-	add.w		d0, temp_coord3_x
-	move.w		surface_map_window_work_h, d0
-	add.w		d0, temp_coord3_y
-
-	move.w		surface_map_window_work_x, temp_coord4_x
-	move.w		surface_map_window_work_y,	temp_coord4_y
-	move.w		surface_map_window_work_h, d0
-	add.w		d0, temp_coord4_y
 
 	RTS
 
@@ -624,12 +650,6 @@ barTopLeftY		dc.w 0
 barBottomRightX	dc.w 0
 barBottomRightY	dc.w 0
 
-mapGridTopLeftX equ 10
-mapGridTopLeftY equ 10
-mapGridWidth	equ 360
-mapGridHeight	equ 180
-
-mapRectanglesLeft	dc.b 0
 negateBcdFlag		dc.b 0
 
 	even
@@ -657,15 +677,6 @@ mapGridRectangles	dc.w  10, 10, 370, 11 	;90 degrees N
 					dc.w  310, 10, 311, 190
 					dc.w  340, 10, 341, 190
 					dc.w  370, 10, 371, 190
-
-FONT_6X6	equ 8
-FONT_8X8 	equ 9
-FONT_8X16 	equ 10
-FONT_16X32 	equ 20
-
-hundredsOffset  equ 4
-tensOffset      equ 5
-onesOffset      equ 6
 
 	section BSS
 kerbinMapImage		ds.b 16384 ;reserve 16kb for the bitmap

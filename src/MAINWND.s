@@ -17,6 +17,8 @@
 	xref FileIsMissing
 
 	xdef GetNextRectangle
+	xdef UpdateData
+	xdef RedrawValues
 
 ;resource info
 	include	POLYGON.RSH
@@ -65,7 +67,8 @@ CreateMainWindow:
 UpdateData:
 	move.l		#msgProcessing, aes_intin+4
 	wind_set	handle_main_window, #WF_INFO
-	JSR			ProcessRawValues
+	JSR			PopulateDataFromPacket
+	JSR			ProcessValuesToStrings
 
 	move.l		#msgInfoBar, aes_intin+4
 	wind_set	handle_main_window, #WF_INFO
@@ -176,23 +179,20 @@ CopyWindowCoords:
 	move.w		main_window_work_x, d1
 	move.w		main_window_work_y, d2
 	JSR			DrawLabels
+	JSR			RedrawValues
 
-	move.b		updateDataFlag, d0
-	cmp.b		#1, updateDataFlag
-	beq			.redrawValues
+	;add.w		d1, temp_coord1_y
+	;v_gtext	temp_coord1_x, temp_coord1_y, #lbl_AP
 
-	JSR			UpdateData
-	move.b		#1, updateDataFlag
+	RTS
 
-.redrawValues:
+*************************************
+RedrawValues:
 	;Redraw the KSP values
 	move.w		gr_hhchar, d0
 	move.w		main_window_work_x, d1
 	move.w		main_window_work_y, d2
 	JSR			DrawValues
-
-	;add.w		d1, temp_coord1_y
-	;v_gtext	temp_coord1_x, temp_coord1_y, #lbl_AP
 
 	RTS
 
@@ -205,36 +205,11 @@ Wind_Set_FourArgs	MACRO
 	ENDM
 
 *************************************
-HandleMainWindowMenuClick:
-	;What button was clicked?
-	move.w	EventBuffer+6, d0
-	move.w	EventBuffer+8, d1
-
-	cmp.w	#MENU_BUTTON_KERBAL_MISSION_CONTROL, d1
-	beq		HandleButtonMissionControl
-
-	cmp.w	#MENU_BUTTON_QUIT, d1
-	beq		Quit
-
-	RTS
-
-*************************************
-HandleButtonMissionControl:
-	AESClearIntIn
-	AESClearAddrIn
-	form_alert	#1, #msgAbout
-	JMP		EventLoop
-
-*************************************
 MoveMainWindow:
 	;Move the window.
 	Wind_Set_FourArgs	EventBuffer+8, EventBuffer+10, EventBuffer+12, EventBuffer+14
 	wind_set	handle_main_window, #WF_CURRXYWH
 
-	RTS
-
-*************************************
-MenuSelectedMainWindow:
 	RTS
 
 *************************************
@@ -418,11 +393,8 @@ msgKSP			dc.b	"Kerbal Space Packet",0
 msgInfoBar		dc.b	" Kerbal Space Packet",0
 msgProcessing	dc.b	" Processing packet data...",0
 
-msgAbout		dc.b	"[2][Kerbal Mission Control||By Luigi Thirty, 2016][Okay]"
-
 mainWindowResource 		dc.b	"RESOURCE\\POLYGON.RSC",0
 mainWindowMenuAddress	dc.l	0
-
 
 	SECTION BSS
 currentRectangleX	dc.w	0

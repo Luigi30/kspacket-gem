@@ -23,6 +23,10 @@
 	XDEF value_Pitch, value_Roll, value_Heading, value_Lat, value_Lon, value_RAlt, value_Density, value_Vsurf
 	XDEF value_SOINumber
 
+	XDEF KSPPacketBuffer
+
+	XDEF PopulateDataFromPacket, ProcessValuesToStrings
+
 M_SwapEndianness	MACRO
 				    ror.w   #8, \1
 				    swap    \1
@@ -43,6 +47,65 @@ M_LoadWordFromPacketStructure	MACRO
 M_LoadByteFromPacketStructure	MACRO
 	move.b	KSP_\1(a0), value_\1
 	ENDM
+
+PopulateDataFromPacket:
+	lea	KSPPacketBuffer, a0
+
+	M_LoadFloatFromPacketStructure AP
+	M_LoadFloatFromPacketStructure PE
+	M_LoadFloatFromPacketStructure SemiMajorAxis
+	M_LoadFloatFromPacketStructure SemiMinorAxis
+	M_LoadFloatFromPacketStructure VVI
+	M_LoadFloatFromPacketStructure e
+	M_LoadFloatFromPacketStructure inc
+	M_LoadFloatFromPacketStructure G
+	M_LoadFloatFromPacketStructure TAp
+	M_LoadFloatFromPacketStructure TPe
+	M_LoadFloatFromPacketStructure TrueAnomaly
+	M_LoadFloatFromPacketStructure Density
+	M_LoadFloatFromPacketStructure period
+	M_LoadFloatFromPacketStructure RAlt
+	M_LoadFloatFromPacketStructure Alt
+	M_LoadFloatFromPacketStructure Vsurf
+	M_LoadFloatFromPacketStructure Lat
+	M_LoadFloatFromPacketStructure Lon
+
+	M_LoadFloatFromPacketStructure LiquidFuelTot
+	M_LoadFloatFromPacketStructure LiquidFuel
+	M_LoadFloatFromPacketStructure OxidizerTot
+	M_LoadFloatFromPacketStructure Oxidizer
+	M_LoadFloatFromPacketStructure EChargeTot
+	M_LoadFloatFromPacketStructure ECharge
+	M_LoadFloatFromPacketStructure MonoPropTot
+	M_LoadFloatFromPacketStructure MonoProp
+	M_LoadFloatFromPacketStructure IntakeAirTot
+	M_LoadFloatFromPacketStructure IntakeAir
+	M_LoadFloatFromPacketStructure SolidFuelTot
+	M_LoadFloatFromPacketStructure SolidFuel
+	M_LoadFloatFromPacketStructure XenonGasTot
+	M_LoadFloatFromPacketStructure XenonGas
+	M_LoadFloatFromPacketStructure LiquidFuelTotS
+	M_LoadFloatFromPacketStructure LiquidFuelS
+	M_LoadFloatFromPacketStructure OxidizerTotS
+	M_LoadFloatFromPacketStructure OxidizerS
+
+	M_LoadFloatFromPacketStructure MissionTime
+	M_LoadFloatFromPacketStructure deltaTime
+	M_LoadFloatFromPacketStructure VOrbit
+	M_LoadFloatFromPacketStructure MNTime
+	M_LoadFloatFromPacketStructure MNDeltaV
+	M_LoadFloatFromPacketStructure Pitch
+	M_LoadFloatFromPacketStructure Roll
+	M_LoadFloatFromPacketStructure Heading
+	M_LoadWordFromPacketStructure ActionGroups
+	M_LoadWordFromPacketStructure SOINumber
+	M_LoadByteFromPacketStructure MaxOverheat ;byte
+	M_LoadFloatFromPacketStructure MachNumber
+	M_LoadWordFromPacketStructure IAS
+	M_LoadByteFromPacketStructure CurrentStage ;byte
+	M_LoadByteFromPacketStructure TotalStage ;byte
+
+	RTS
 
 PopulateTestData:
 	lea		TestPacket, a0
@@ -168,7 +231,7 @@ M_FloatToString		MACRO
 					ENDM
 
 *************************************
-ProcessRawValues:
+ProcessValuesToStrings:
 	xref FloatToString
 
 	;This takes approximately 10 years on an 8MHz 68000

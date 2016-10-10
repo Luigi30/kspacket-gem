@@ -5,8 +5,8 @@ strcpy:
 	;a0 = destination
 	;a1 = source
 .loop:
-	move.b	(a1)+, (a0)
-	cmp.b	#0, (a0)+ ;did we just copy a null?
+	move.b	(a1)+, (a0)+
+	cmp.b	#0, (-1)(a0) ;did we just copy a null?
 	bne		.loop ;no
 
 .done:
@@ -27,4 +27,8 @@ strcat:
 	;a0 is now the character after the null so we can start copying
 	JSR	strcpy
 
+	RTS
+
+sprintf:
+	;parameters: destination, string, interpolation
 	RTS

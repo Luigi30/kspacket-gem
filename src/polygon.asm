@@ -29,6 +29,7 @@
 	xdef 	GotMenuSelectedEvent
 	xdef	FileIsMissing
 	xdef	ShowAboutBox
+	xdef	SerialUpdate
 
 	xdef	formAlertIcon1
 	xdef	formAlertButtonExit
@@ -44,6 +45,8 @@
 
 	xref	handle_main_window
 	xref	handle_surface_map_window
+
+	xref	RedrawValues
 
 *************************************
 
@@ -94,7 +97,7 @@ START:
 	;trap 	#14 ;XBIOS call
 	;addq.l	#6,sp
 
-	jsr	PopulateTestData
+	;jsr	PopulateTestData
 	jsr	GetPhysicalBase
 	jsr	GetLogicalBase
 
@@ -140,6 +143,7 @@ VDIInit:
 
 OpenWindows:
 	wind_open	handle_main_window, #20, #40, #600, #300
+	move.b		#1, mainWindowIsOpen
 
 	graf_mouse #0 ;reset mouse to an arrow
 
@@ -179,7 +183,7 @@ EventMulti:
 
 	;Stuff we want to do after every event.
 PostEventRoutine:
-	JSR		CheckSerialBuffer
+	JSR		SerialUpdate
 
 	;We got an event! What kind is it?
 CheckEventType:
@@ -234,7 +238,7 @@ HandleKeypress:
 
 	move.b		#1, mainWindowIsOpen
 	move.b		#0, surfaceMapWindowIsOpen
-	JMP		.done
+	JMP			.done
 
 .showSurfaceMapWindow:
 	cmp.b		#1, surfaceMapWindowIsOpen
@@ -244,10 +248,10 @@ HandleKeypress:
 
 	move.b		#1, surfaceMapWindowIsOpen
 	move.b		#0, mainWindowIsOpen
-	JMP		.done
+	JMP			.done
 
 .done:
-	JMP		EventLoop
+	JMP			EventLoop
 
 *************************************
 GotRedrawEvent:
@@ -440,6 +444,26 @@ ShowFileSelector:
 	GEMDOS	c_conws, 8
 
 	RTS
+
+*************************************
+SerialUpdate:
+	JSR			CheckSerialBuffer
+
+	;did we get new data?
+	cmp.b		#1, serialDataUpdatedFlag
+	bne			.done
+
+	JSR			UpdateData
+
+	;dispatch redraw values to the main window if it's open
+	cmp.b		#1, mainWindowIsOpen
+	bne			.done
+
+	JSR			RedrawValues
+
+.done:
+	move.b		#0, serialDataUpdatedFlag
+	RTS	
 
 *************************************
 ;Included functions

@@ -23,6 +23,8 @@
 	XDEF value_Pitch, value_Roll, value_Heading, value_Lat, value_Lon, value_RAlt, value_Density, value_Vsurf
 	XDEF value_SOINumber
 
+	public KSPPacketBuffer
+
 M_SwapEndianness	MACRO
 				    ror.w   #8, \1
 				    swap    \1
@@ -231,6 +233,7 @@ ProcessRawValues:
 
 ;KSPIO packet field offsets
 	SECTION DATA
+
 KSP_AP					equ	0
 KSP_PE					equ	4
 KSP_SemiMajorAxis		equ	8
@@ -282,6 +285,7 @@ KSP_MachNumber			equ	180
 KSP_IAS					equ	184
 KSP_CurrentStage		equ	188
 KSP_TotalStage			equ	189
+KSP_Checksum			equ 190
 
 ;Orbital parameters and stuff
 lbl_AP				dc.b	"Ap      : ",0
@@ -462,9 +466,9 @@ string_PE			ds.b	32
 string_SemiMajorAxis	ds.b	32
 string_SemiMinorAxis	ds.b	32
 string_VVI			ds.b	32
-string_e				ds.b	32
+string_e			ds.b	32
 string_inc			ds.b	32
-string_G				ds.b	32
+string_G			ds.b	32
 string_TAp			ds.b	32
 string_TPe			ds.b	32
 string_TrueAnomaly	ds.b	32
@@ -472,7 +476,7 @@ string_Density		ds.b	32
 string_period		ds.b	32
 string_RAlt			ds.b	32
 string_Alt			ds.b	32
-string_Vsurf			ds.b	32
+string_Vsurf		ds.b	32
 string_Lat			ds.b	32
 string_Lon			ds.b	32
 
@@ -486,31 +490,31 @@ string_ECharge		ds.b	32
 string_MonoPropTot	ds.b	32
 string_MonoProp		ds.b	32
 string_IntakeAirTot	ds.b	32
-string_IntakeAir		ds.b	32
+string_IntakeAir	ds.b	32
 string_SolidFuelTot	ds.b	32
-string_SolidFuel		ds.b	32
+string_SolidFuel	ds.b	32
 string_XenonGasTot	ds.b	32
 string_XenonGas		ds.b	32
 string_LiquidFuelTotS	ds.b	32
 string_LiquidFuelS	ds.b	32
 string_OxidizerTotS	ds.b	32
-string_OxidizerS		ds.b	32
+string_OxidizerS	ds.b	32
 
 string_MissionTime	ds.b	32
-string_deltaTime		ds.b	32
+string_deltaTime	ds.b	32
 string_VOrbit		ds.b	32
 string_MNTime		ds.b	32
 string_MNDeltaV		ds.b	32
-string_Pitch			ds.b	32
+string_Pitch		ds.b	32
 string_Roll			ds.b	32
 string_Heading		ds.b	32
 string_ActionGroups	ds.b	32
-string_SOINumber		ds.b	32
+string_SOINumber	ds.b	32
 string_MaxOverheat	dc.b	32
 string_MachNumber	ds.b	32
 string_IAS			ds.b	32
-string_CurrentStage	dc.b	32
-string_TotalStage	dc.b	32
+string_CurrentStage	ds.b	32
+string_TotalStage	ds.b	32
 
 ;A KSP packet.
 	even
@@ -521,4 +525,5 @@ TestPacket4		dc.b	$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$0
 TestPacket5		dc.b	$41,$00,$00,$20,$41,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$0C,$43,$28,$2F,$D6,$42,$00,$00,$00,$00
 TestPacket6		dc.b	$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$02,$00,$00,$00,$00
 TestPacket7		dc.b	$00,$00,$00,$2E,$CF,$53,$43,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$B4,$42,$00,$00,$00,$00,$3F,$A0
-TestPacket8		dc.b	$D3,$3F,$00,$00,$82,$22,$5F,$1E,$A5,$3E,$F9,$22,$DE,$42,$00,$01
+TestPacket8		dc.b	$D3,$3F,$00,$00,$82,$22,$5F,$1E,$A5,$3E,$F9,$22,$DE,$42,$00,$01,$12,$34
+
